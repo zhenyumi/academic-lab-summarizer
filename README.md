@@ -115,7 +115,7 @@ reports/lab-summaries/<task_id>/
   artifacts/
 ```
 
-`report.html` is the default user-facing report. `report.md` is the matching Markdown report. JSON and JSONL artifacts are kept alongside the report so the agent can audit evidence, rerun individual steps, or explain how a conclusion was reached.
+`report.html` is the default user-facing report with interactive navigation, clickable evidence references, and collapsible sections. `report.md` is the matching Markdown report. JSON and JSONL artifacts are kept alongside the report so the agent can audit evidence, rerun individual steps, or explain how a conclusion was reached.
 
 ## Skill Categories
 
@@ -133,7 +133,7 @@ Publication analysis is a core v1 contract, not a future add-on.
 
 | Skill | What it does |
 |-------|--------------|
-| `lab-publication-profile` | Builds a recent publication profile with a tiered search policy, source provenance, match tiers, curated publication status, evidence records, audit output, and research theme synthesis. OpenAlex and Semantic Scholar are required priority sources; PubMed is required for biomedical, clinical, life-science, and neuroscience labs; Crossref, preprint servers, and lab website publication pages act as fallback or enrichment sources. |
+| `lab-publication-profile` | Builds a recent publication profile with a tiered search policy, source provenance, match tiers, curated publication status, evidence records, audit output, and research theme synthesis. Lab website publications page is searched first (Tier 0, zero API cost); then OpenAlex and Semantic Scholar (Tier 1); PubMed is required for biomedical, clinical, life-science, and neuroscience labs; Crossref and preprint servers act as enrichment or fallback (Tier 2). API rate limiting with exponential backoff is enforced. |
 
 Ambiguous and rejected publications are excluded from research themes and lab research summaries. Confirmed and likely papers can be summarized with structured overviews covering the research question, methods, key finding, and significance.
 
@@ -182,6 +182,18 @@ Examples:
 "Create an evidence-backed profile for <PI name>'s lab with limitations clearly separated from confirmed facts."
 "Generate the final HTML and Markdown reports from this lab summary artifact directory."
 ```
+
+## Report Features
+
+The HTML report includes:
+
+- **Sticky section navigation** with scroll-based active state highlighting
+- **Clickable evidence references** (`[site:N]`, `[pub:N]`) that auto-open the evidence panel and scroll to the target with a highlight animation
+- **Publication cards** with numbered entries, author display (first + last author, PI name highlighted), and structured overview fields (research question, key finding, methods, significance)
+- **Collapsible full publication list** sourced from curated confirmed/likely publications
+- **Three-tier font size toggle** (A⁻/A/A⁺) with localStorage persistence
+- **Return button** after navigating to an evidence reference
+- **Print-optimized layout** and `prefers-reduced-motion` support
 
 ## Behind the Scenes
 

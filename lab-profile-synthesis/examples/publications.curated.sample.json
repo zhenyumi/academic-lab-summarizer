@@ -4,7 +4,7 @@
     {
       "candidate_id": 1,
       "title": "Neural crest migration patterns in zebrafish",
-      "authors": ["Jane Doe", "John Smith"],
+      "authors": ["Jane Doe", "John Smith", "Alice Wang", "Bob Lee", "Carol Chen"],
       "year": 2024,
       "publication_type": "peer_reviewed",
       "source_db": "openalex",
@@ -15,32 +15,32 @@
     },
     {
       "candidate_id": 2,
-      "title": "Live imaging of neural tube closure",
-      "authors": ["Jane Doe", "Alice Wang"],
+      "title": "Live imaging of neural tube closure in vertebrate embryos",
+      "authors": ["Alice Wang", "Bob Lee", "Jane Doe"],
       "year": 2023,
       "publication_type": "peer_reviewed",
       "source_db": "pubmed",
       "source_url": "https://pubmed.ncbi.nlm.nih.gov/12345678",
       "doi": "10.1234/example.2023.2",
       "match_tier": "confirmed",
-      "match_evidence": "Affiliation confirmed; topic overlaps with neural tube development research."
+      "match_evidence": "PI is senior author; affiliation confirmed; topic overlaps with neural tube development research."
     },
     {
       "candidate_id": 3,
-      "title": "Zebrafish models in developmental biology",
-      "authors": ["Jane Doe", "Bob Lee"],
+      "title": "Zebrafish models in developmental biology: a comprehensive review",
+      "authors": ["David Park", "Jane Doe", "Eva Muller", "Frank Garcia", "Grace Kim", "Hiro Tanaka"],
       "year": 2022,
       "publication_type": "peer_reviewed",
       "source_db": "semantic_scholar",
       "source_url": "https://www.semanticscholar.org/paper/abc123",
       "doi": "10.1234/example.2022.3",
       "match_tier": "likely",
-      "match_evidence": "Affiliation confirmed; topic overlaps broadly with lab methods."
+      "match_evidence": "PI listed as middle author; affiliation confirmed; topic overlaps broadly with lab methods."
     },
     {
       "candidate_id": 4,
       "title": "CRISPR screening in model organisms",
-      "authors": ["Jane Doe"],
+      "authors": ["J. Doe", "Alice Brown"],
       "year": 2023,
       "publication_type": "peer_reviewed",
       "source_db": "openalex",
@@ -60,10 +60,34 @@
       "doi": "10.1101/2024.01.01.123456",
       "match_tier": "likely",
       "match_evidence": "Affiliation confirmed; topic overlaps with neural crest research."
+    },
+    {
+      "candidate_id": 6,
+      "title": "Wnt signaling regulates neural stem cell proliferation",
+      "authors": ["Ivan Petrov", "Jane Doe"],
+      "year": 2024,
+      "publication_type": "peer_reviewed",
+      "source_db": "lab_website",
+      "source_url": "https://example.edu/doe-lab/publications",
+      "doi": "10.1234/example.2024.6",
+      "match_tier": "confirmed",
+      "match_evidence": "PI is senior author; publication listed on lab website; Wnt signaling directly aligns with lab research."
+    },
+    {
+      "candidate_id": 7,
+      "title": "Spectral imaging of neural crest delamination",
+      "authors": ["Karen Liu", "Ming Zhao", "Jane Doe", "Nathan Brooks", "Olivia Santos"],
+      "year": 2023,
+      "publication_type": "peer_reviewed",
+      "source_db": "lab_website",
+      "source_url": "https://example.edu/doe-lab/publications",
+      "doi": "10.1234/example.2023.7",
+      "match_tier": "confirmed",
+      "match_evidence": "PI is middle author; publication listed on lab website; neural crest delamination overlaps with lab research."
     }
   ],
   "tier_counts": {
-    "confirmed": 2,
+    "confirmed": 4,
     "likely": 2,
     "ambiguous": 1,
     "rejected": 0

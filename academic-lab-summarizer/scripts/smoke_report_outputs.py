@@ -40,6 +40,7 @@ def copy_lab_summary_examples(target_dir: Path) -> None:
         "publications.curated.sample.json": "publications.curated.json",
         "publication_evidence.sample.jsonl": "publication_evidence.jsonl",
         "research_theme_profile.sample.json": "research_theme_profile.json",
+        "publication_candidates.sample.jsonl": "publication_candidates.jsonl",
     }
     target_dir.mkdir(parents=True, exist_ok=True)
     for src_name, dst_name in mapping.items():
@@ -83,6 +84,27 @@ def main() -> int:
         require(report_dir / "report.md")
         require(report_dir / "report_manifest.json")
         require(report_dir / "artifacts" / "lab_profile.json")
+
+        html_text = (report_dir / "report.html").read_text(encoding="utf-8")
+        if 'class="pi-author"' not in html_text:
+            raise AssertionError("Report HTML missing PI author highlight (.pi-author)")
+        if 'class="pub-authors"' not in html_text:
+            raise AssertionError("Report HTML missing publication authors (.pub-authors)")
+        if "all-publications" not in html_text:
+            raise AssertionError("Report HTML missing all-publications section")
+
+        tiered_dir = workspace / "lab_summaries" / "example-lab-tiered"
+        copy_lab_summary_examples(tiered_dir)
+        tiered_src = REPO_ROOT / "lab-profile-synthesis" / "examples" / "publications.curated.tiered.sample.json"
+        shutil.copy2(tiered_src, tiered_dir / "publications.curated.json")
+
+        tiered_report_dir = report_builder.build(tiered_dir)
+        require(tiered_report_dir / "report.html")
+        tiered_html = (tiered_report_dir / "report.html").read_text(encoding="utf-8")
+        if 'class="pi-author"' not in tiered_html:
+            raise AssertionError("Tiered-curated report HTML missing PI author highlight")
+        if "all-publications" not in tiered_html:
+            raise AssertionError("Tiered-curated report HTML missing all-publications section")
 
         reports_dir = index_builder.build(workspace)
         require(reports_dir / "index.html")

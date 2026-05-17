@@ -45,6 +45,12 @@ Optional:
   "year_range": [2020, 2026],
   "search_sources": [
     {
+      "source": "lab_website",
+      "tier": 0,
+      "role": "primary_context",
+      "rationale": "Lab site evidence contains publication references; PI-curated publication list provides authoritative attribution."
+    },
+    {
       "source": "openalex",
       "tier": 1,
       "role": "primary",
@@ -230,13 +236,15 @@ One JSON object per line linking publications to the lab:
     "sufficient": true
   },
   "source_status": {
+    "tier0_available": true,
     "tier1_sufficient": true,
     "tier2_attempted": false,
     "stop_reason": "tier1_sufficient",
     "sources": [
-      {"source": "openalex", "tier": 1, "role": "primary", "activated": true, "activation_reason": "default", "outcome": "found_sufficient", "candidates": 8},
-      {"source": "semantic_scholar", "tier": 1, "role": "supplementary", "activated": true, "activation_reason": "default", "outcome": "found_sufficient", "candidates": 5},
-      {"source": "pubmed", "tier": 1, "role": "conditional_primary", "activated": true, "activation_reason": "biomedical_relevant", "outcome": "no_results", "candidates": 0}
+      {"source": "lab_website", "tier": 0, "role": "primary_context", "activated": true, "activation_reason": "publication_ref_in_site_evidence", "outcome": "found_sufficient", "candidates": 8},
+      {"source": "openalex", "tier": 1, "role": "primary", "activated": true, "activation_reason": "default", "outcome": "found_sufficient", "candidates": 8, "rate_limit_state": {"request_count": 3, "retry_count": 0, "last_delay_seconds": 0, "failure_reason": null}},
+      {"source": "semantic_scholar", "tier": 1, "role": "supplementary", "activated": true, "activation_reason": "default", "outcome": "found_sufficient", "candidates": 5, "rate_limit_state": {"request_count": 2, "retry_count": 1, "last_delay_seconds": 2, "failure_reason": null}},
+      {"source": "pubmed", "tier": 1, "role": "conditional_primary", "activated": true, "activation_reason": "biomedical_relevant", "outcome": "no_results", "candidates": 0, "rate_limit_state": {"request_count": 1, "retry_count": 0, "last_delay_seconds": 0, "failure_reason": null}}
     ]
   },
   "blocking_failures": [],
@@ -251,7 +259,7 @@ One JSON object per line linking publications to the lab:
 
 - `status`: `pass`, `partial`, or `fail`.
 - `metrics`: Including tier counts, publication type counts, and provenance completeness.
-- `source_status`: Tiered search status with `tier1_sufficient`, `tier2_attempted`, `stop_reason`, and per-source details.
+- `source_status`: Tiered search status with `tier0_available`, `tier1_sufficient`, `tier2_attempted`, `stop_reason`, and per-source details including `rate_limit_state` when applicable.
 - `blocking_failures`, `warnings`, `repair_hints`.
 
 ## Output: `research_theme_profile.json`
@@ -287,11 +295,19 @@ One JSON object per line linking publications to the lab:
 
 ## Tiered Source Search Policy
 
-Publication-source search must follow a tiered priority model. Agents must not search all sources simultaneously or re-implement source adapters from scratch on every invocation.
+Publication-source search must follow a tiered priority model. Sources are searched sequentially, not simultaneously. Agents must not re-implement source adapters from scratch on each invocation.
 
-### Tier 1 — Primary Search
+### Tier 0 — Lab Context (zero API cost, always first)
 
-Always search first:
+| Source | Role | Activation |
+|---|---|---|
+| Lab website | PI-curated publication list, lab-level attribution | When `lab_site_evidence.jsonl` contains `claim_type: "publication_ref"` |
+
+Tier 0 is checked before any API call. It has zero network cost beyond what the prior `lab-site-evidence-extraction` step already fetched. Lab website publications are PI-curated and authoritative for attribution, but typically lack abstracts and citation metadata.
+
+If `lab_site_evidence.jsonl` does not contain `claim_type: "publication_ref"`, skip Tier 0 and proceed directly to Tier 1.
+
+### Tier 1 — Primary Search (structured API sources)
 
 | Source | Role | Activation |
 |---|---|---|
@@ -299,16 +315,13 @@ Always search first:
 | Semantic Scholar | Supplementary enrichment, ranking, abstracts, citations, cross-check | Always |
 | PubMed | Required for biomedical/life-science/neuroscience/clinical labs | When `biomedical_relevant: true` |
 
-### Tier 2 — Enrichment / Fallback
-
-Activated only when Tier 1 does not produce sufficient confirmed or likely publications:
+### Tier 2 — Enrichment / Fallback (only when Tier 0 + Tier 1 insufficient)
 
 | Source | Role | Activation |
 |---|---|---|
 | Crossref | DOI, publication date, venue, publisher metadata verification | When Tier 1 metadata incomplete or no confirmed publications |
 | bioRxiv / medRxiv | Preprint discovery | When lab is life-science/clinical or recent preprints expected |
 | arXiv | Preprint discovery | When lab is CS/physics/math or recent preprints expected |
-| Lab website | Lab-level attribution, publications page cross-check | When Tier 1 has ambiguous candidates needing lab-level confirmation |
 
 ### Manual Fallback
 
@@ -316,15 +329,43 @@ Activated only when Tier 1 does not produce sufficient confirmed or likely publi
 
 ### Search Flow Rules
 
-1. Search Tier 1 first. Track `source_status` per source.
-2. Evaluate Tier 1 sufficiency: ≥ 1 confirmed publication OR ≥ 2 likely publications = sufficient.
-3. If Tier 1 is insufficient, activate Tier 2 sources with `activation_reason`.
-4. If Tier 1 + Tier 2 are still insufficient, set `stop_reason: "tier1_plus_tier2_insufficient"` and `sufficient_for_profile: false`.
-5. Agents must not proceed to theme synthesis when `sufficient_for_profile: false` unless explicitly marked `insufficient_evidence: true` in `research_theme_profile.json`.
+1. Check Tier 0: scan `lab_site_evidence.jsonl` for `claim_type: "publication_ref"`. If found, extract publication references and add to candidates. Track `source_status` per source.
+2. Search Tier 1 sources sequentially. Track `source_status` per source, including rate limit state.
+3. Evaluate sufficiency after each tier: ≥ 1 confirmed publication OR ≥ 2 likely publications = sufficient.
+4. If Tier 0 + Tier 1 is insufficient, activate Tier 2 sources with `activation_reason`.
+5. If all tiers are still insufficient, set `stop_reason: "all_tiers_insufficient"` and `sufficient_for_profile: false`.
+6. Agents must not proceed to theme synthesis when `sufficient_for_profile: false` unless explicitly marked `insufficient_evidence: true` in `research_theme_profile.json`.
 
 ### Source Adapter Reuse Rule
 
 Source adapters (API clients, query builders, response parsers) should be written as reusable components in `<run>/tools/`. Agents must not re-implement the same API client from scratch on each invocation. When a real API adapter exists in `<run>/tools/`, use it; otherwise use the template runner's fixture-based approach until an adapter is built.
+
+## API Rate Limiting
+
+All external API sources (Tier 1 and Tier 2) must respect rate limits. Lab website (Tier 0) is exempt from API rate limiting but must respect `robots.txt` and `Crawl-Delay`.
+
+### Rules
+
+1. **Inter-request delay**: Minimum 1 second between consecutive requests to the same service (configurable per source).
+2. **Exponential backoff**: On HTTP 429 (rate limit) or 503 (service unavailable), retry with exponential backoff: 2s, 4s, 8s, up to a maximum of 30 seconds per retry.
+3. **Skip after 3 failures**: After 3 consecutive failures for the same source, mark that source as `"skipped"` with `activation_reason: "rate_limited"` and proceed to the next source.
+4. **Per-source timeout**: 60 seconds total per source. If a source cannot complete within this window, mark it `"timeout"` and proceed.
+5. **Rate limit state logging**: Record retry count, last delay, and failure reason in `source_status.sources[].rate_limit_state` for audit trail.
+
+### Rate Limit State Schema
+
+```json
+{
+  "rate_limit_state": {
+    "request_count": 3,
+    "retry_count": 1,
+    "last_delay_seconds": 2,
+    "failure_reason": null
+  }
+}
+```
+
+When a source is skipped due to rate limiting, `failure_reason` is set to `"rate_limited"` or `"timeout"`.
 
 ## Provenance Rules
 

@@ -4,44 +4,44 @@
     {
       "candidate_id": 1,
       "title": "Neural crest migration patterns in zebrafish",
-      "authors": ["Jane Doe", "John Smith"],
+      "authors": ["Jane Doe", "John Smith", "Alice Wang", "Bob Lee", "Carol Chen"],
       "year": 2024,
-      "doi": "10.1234/example.2024.001",
+      "doi": "10.1234/example.2024.1",
       "venue": "Developmental Biology",
       "match_tier": "confirmed",
-      "match_rationale": "PI is author, affiliation confirmed, topic matches lab site research direction.",
+      "match_rationale": "PI is first author; affiliation confirmed via author page; topic overlaps with lab site research direction.",
       "source_db": "openalex"
     },
     {
       "candidate_id": 2,
-      "title": "Live imaging of neural tube closure",
-      "authors": ["Jane Doe", "Alice Brown"],
+      "title": "Live imaging of neural tube closure in vertebrate embryos",
+      "authors": ["Alice Wang", "Bob Lee", "Jane Doe"],
       "year": 2023,
-      "doi": "10.1234/example.2023.002",
+      "doi": "10.1234/example.2023.2",
       "venue": "Nature Communications",
       "match_tier": "confirmed",
-      "match_rationale": "PI is author, affiliation confirmed, topic overlap with lab research, also listed on lab publications page.",
+      "match_rationale": "PI is senior author; affiliation confirmed; topic overlaps with neural tube development research.",
       "source_db": "pubmed"
     },
     {
       "candidate_id": 3,
-      "title": "Zebrafish models in developmental biology",
-      "authors": ["Jane Doe"],
+      "title": "Zebrafish models in developmental biology: a comprehensive review",
+      "authors": ["David Park", "Jane Doe", "Eva Muller", "Frank Garcia", "Grace Kim", "Hiro Tanaka"],
       "year": 2022,
-      "doi": "10.1234/example.2022.003",
+      "doi": "10.1234/example.2022.3",
       "venue": "Developmental Dynamics",
       "match_tier": "likely",
-      "match_rationale": "PI name matches, topic overlaps, but affiliation could not be confirmed.",
+      "match_rationale": "PI listed as middle author; affiliation confirmed; topic overlaps broadly with lab methods.",
       "source_db": "semantic_scholar"
     },
     {
       "candidate_id": 5,
       "title": "Neural crest derivatives in vertebrates",
-      "authors": ["Jane Doe", "Carol White"],
+      "authors": ["Jane Doe", "Carol Chen"],
       "year": 2024,
       "venue": "bioRxiv",
       "match_tier": "likely",
-      "match_rationale": "PI is author, affiliation confirmed, topic overlaps, but it is a preprint.",
+      "match_rationale": "PI is first author; affiliation confirmed; topic overlaps with neural crest research.",
       "source_db": "biorxiv"
     },
     {
@@ -53,10 +53,32 @@
       "match_tier": "ambiguous",
       "match_rationale": "Author initials match PI but full name not confirmed; no affiliation data; coauthor overlap exists but topic does not match lab research.",
       "source_db": "semantic_scholar"
+    },
+    {
+      "candidate_id": 6,
+      "title": "Wnt signaling regulates neural stem cell proliferation",
+      "authors": ["Ivan Petrov", "Jane Doe"],
+      "year": 2024,
+      "doi": "10.1234/example.2024.6",
+      "venue": "Cell Reports",
+      "match_tier": "confirmed",
+      "match_rationale": "PI is senior author; publication listed on lab website; Wnt signaling directly aligns with lab research.",
+      "source_db": "lab_website"
+    },
+    {
+      "candidate_id": 7,
+      "title": "Spectral imaging of neural crest delamination",
+      "authors": ["Karen Liu", "Ming Zhao", "Jane Doe", "Nathan Brooks", "Olivia Santos"],
+      "year": 2023,
+      "doi": "10.1234/example.2023.7",
+      "venue": "Developmental Cell",
+      "match_tier": "confirmed",
+      "match_rationale": "PI is middle author; publication listed on lab website; neural crest delamination overlaps with lab research.",
+      "source_db": "lab_website"
     }
   ],
   "tier_counts": {
-    "confirmed": 2,
+    "confirmed": 4,
     "likely": 2,
     "ambiguous": 1,
     "rejected": 0

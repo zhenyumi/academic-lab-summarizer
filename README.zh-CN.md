@@ -115,7 +115,7 @@ reports/lab-summaries/<task_id>/
   artifacts/
 ```
 
-`report.html` 是默认面向用户打开的报告，`report.md` 是对应的 Markdown 版本。JSON 和 JSONL 产物会与报告一起保留，方便代理审计证据、重跑单个步骤，或解释某个结论是如何得出的。
+`report.html` 是默认面向用户打开的交互式报告，支持导航、可点击证据引用和可折叠章节。`report.md` 是对应的 Markdown 版本。JSON 和 JSONL 产物会与报告一起保留，方便代理审计证据、重跑单个步骤，或解释某个结论是如何得出的。
 
 ## 技能分类
 
@@ -133,7 +133,7 @@ reports/lab-summaries/<task_id>/
 
 | 技能 | 功能 |
 |------|------|
-| `lab-publication-profile` | 构建近年论文画像，包括分层搜索策略、来源 provenance、匹配层级、人工/规则策展状态、证据记录、审计输出和研究主题综合。OpenAlex 与 Semantic Scholar 是必须优先使用的来源；当实验室属于生物医学、临床、生命科学或神经科学相关领域时，PubMed 也是必须来源；Crossref、预印本服务器和实验室官网论文页作为 fallback 或补充来源。 |
+| `lab-publication-profile` | 构建近年论文画像，包括分层搜索策略、来源 provenance、匹配层级、人工/规则策展状态、证据记录、审计输出和研究主题综合。实验室官网论文页首先搜索（Tier 0，零 API 成本）；然后搜索 OpenAlex 与 Semantic Scholar（Tier 1）；当实验室属于生物医学、临床、生命科学或神经科学相关领域时，PubMed 也是必须来源；Crossref 和预印本服务器作为补充或 fallback（Tier 2）。API 调用采用指数退避限速策略。 |
 
 ambiguous 和 rejected 论文不得进入研究主题和实验室研究总结。confirmed 与 likely 论文可以生成结构化概览，包括研究问题、方法、关键发现和意义。
 
@@ -182,6 +182,18 @@ ambiguous 和 rejected 论文不得进入研究主题和实验室研究总结。
 "为 <PI name> 的实验室生成带证据链的画像，并把局限性和已确认事实分开。"
 "从这个实验室总结产物目录生成最终 HTML 和 Markdown 报告。"
 ```
+
+## 报告功能
+
+HTML 报告包含：
+
+- **固定导航栏**，随滚动位置高亮当前章节
+- **可点击证据引用**（`[site:N]`、`[pub:N]`），自动展开证据面板并滚动到目标条目，带高亮动画
+- **出版物卡片**，带编号、作者显示（第一作者 + 最后作者，PI 姓名高亮）和结构化概览字段（研究问题、关键发现、方法、意义）
+- **可折叠完整出版物列表**，来源于策展确认/可能的出版物
+- **三档字体切换**（A⁻/A/A⁺），设置保存在 localStorage
+- **返回按钮**，从证据引用跳转后可返回原位置
+- **打印优化布局**和 `prefers-reduced-motion` 支持
 
 ## 幕后机制
 

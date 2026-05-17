@@ -39,58 +39,96 @@ All outputs are written under `lab_summaries/<lab_id>/`.
 
 ## Tiered Source Search Policy
 
-Publication-source search follows a tiered priority model. Do not search all sources simultaneously or re-implement source adapters from scratch on every invocation.
+Publication-source search follows a tiered priority model. Sources are searched sequentially, not simultaneously. Do not re-implement source adapters from scratch on each invocation.
 
-### Tier 1 — Primary Search (always first)
+### Tier 0 — Lab Context (zero API cost, always first)
 
 | Source | Role | Activation |
 |---|---|---|
-| OpenAlex | Default structured starting point | Always |
-| Semantic Scholar | Enrichment, ranking, cross-check | Always |
+| Lab website | PI-curated publication list, lab-level attribution | When `lab_site_evidence.jsonl` contains `claim_type: "publication_ref"` |
+
+Tier 0 is checked before any API call. It has zero network cost beyond what the prior `lab-site-evidence-extraction` step already fetched. Lab website publications are PI-curated and authoritative for attribution, but typically lack abstracts and citation metadata. When Tier 0 produces candidates, they are merged with Tier 1 results during curation.
+
+If `lab_site_evidence.jsonl` does not contain `claim_type: "publication_ref"`, skip Tier 0 and proceed directly to Tier 1.
+
+### Tier 1 — Primary Search (structured API sources)
+
+| Source | Role | Activation |
+|---|---|---|
+| OpenAlex | Default structured starting point for author/institution/works lookup | Always |
+| Semantic Scholar | Enrichment, ranking, abstracts, cross-check | Always |
 | PubMed | Required for biomedical/life-science/neuroscience/clinical | When `biomedical_relevant: true` |
 
-### Tier 2 — Enrichment / Fallback (only when Tier 1 insufficient)
+### Tier 2 — Enrichment / Fallback (only when Tier 0 + Tier 1 insufficient)
 
 | Source | Role | Activation |
 |---|---|---|
 | Crossref | DOI/date/venue metadata verification | Tier 1 metadata incomplete or no confirmed publications |
 | bioRxiv / medRxiv | Preprint discovery | Life-science/clinical labs with recent preprints |
 | arXiv | Preprint discovery | CS/physics/math labs |
-| Lab website | Lab-level attribution cross-check | Ambiguous candidates needing confirmation |
 
 ### Search Flow
 
-1. Search Tier 1 first. Track `source_status` per source.
-2. Evaluate Tier 1 sufficiency: ≥ 1 confirmed OR ≥ 2 likely = sufficient.
-3. If insufficient, activate Tier 2 with `activation_reason`.
-4. If Tier 1 + Tier 2 still insufficient, set `stop_reason` and `sufficient_for_profile: false`.
-5. Do not proceed to theme synthesis when `sufficient_for_profile: false` unless explicitly marked `insufficient_evidence: true`.
+1. Check Tier 0: scan `lab_site_evidence.jsonl` for `claim_type: "publication_ref"`. If found, extract publication references from site evidence and add to candidates. Track `source_status` per source.
+2. Search Tier 1 sources sequentially. Track `source_status` per source, including rate limit state.
+3. Evaluate sufficiency after each tier: ≥ 1 confirmed OR ≥ 2 likely = sufficient.
+4. If Tier 0 + Tier 1 insufficient, activate Tier 2 with `activation_reason`.
+5. If all tiers still insufficient, set `stop_reason: "all_tiers_insufficient"` and `sufficient_for_profile: false`.
+6. Do not proceed to theme synthesis when `sufficient_for_profile: false` unless explicitly marked `insufficient_evidence: true`.
 
 ### Source Adapter Reuse
 
 Source adapters (API clients, query builders, response parsers) should be reusable components in `<run>/tools/`. Do not re-implement the same API client from scratch on each invocation. Use the template runner's fixture-based approach until real adapters are built.
 
+## API Rate Limiting
+
+All external API sources (Tier 1 and Tier 2) must respect rate limits. Lab website (Tier 0) is exempt from API rate limiting but must respect `robots.txt` and `Crawl-Delay`.
+
+### Rules
+
+1. **Inter-request delay**: Minimum 1 second between consecutive requests to the same service (configurable per source).
+2. **Exponential backoff**: On HTTP 429 (rate limit) or 503 (service unavailable), retry with exponential backoff: 2s, 4s, 8s, up to a maximum of 30 seconds per retry.
+3. **Skip after 3 failures**: After 3 consecutive failures for the same source, mark that source as `"skipped"` with `activation_reason: "rate_limited"` and proceed to the next source.
+4. **Per-source timeout**: 60 seconds total per source. If a source cannot complete within this window, mark it `"timeout"` and proceed.
+5. **Rate limit state logging**: Record retry count, last delay, and failure reason in `source_status.sources[].rate_limit_state` for audit trail.
+
+### Rate Limit State Schema
+
+```json
+{
+  "rate_limit_state": {
+    "request_count": 3,
+    "retry_count": 1,
+    "last_delay_seconds": 2,
+    "failure_reason": null
+  }
+}
+```
+
+When a source is skipped due to rate limiting, `failure_reason` is set to `"rate_limited"` or `"timeout"`.
+
 ## Source Priority
 
 | Source | Role | Priority |
 |---|---|---|
+| Lab website | PI-curated publications page, lab-level attribution, research direction | Primary context (Tier 0) |
 | OpenAlex | Default structured starting point for author/institution/works lookup | Primary |
 | Semantic Scholar | Supplementary enrichment, ranking, abstracts, citations, cross-check | Supplementary |
 | PubMed | Required for biomedical/life-science/neuroscience/clinical labs | Conditional primary |
 | Crossref | DOI, publication date, venue, publisher metadata verification | Verification |
 | arXiv/bioRxiv/medRxiv | Preprint sources; must be labeled separately from peer-reviewed | Supplementary |
-| Lab website | Lab-level attribution, publications page, research direction | Context |
 | Google Scholar | Not recommended as automated primary source; manual fallback only | Not automated |
 
 ### Source Policy Rules
 
-1. OpenAlex is the default structured starting point.
-2. Semantic Scholar supplements for enrichment, ranking, and cross-checking.
-3. PubMed is required when the lab is biomedical/clinical/life-science/neuroscience.
-4. Crossref is for DOI/date/venue verification, not primary discovery.
-5. arXiv/bioRxiv/medRxiv preprints must be clearly labeled and not merged with peer-reviewed without a status field.
-6. Lab website evidence is for attribution context; it is noisy and must be evidence-audited.
-7. Every publication candidate must retain source database, source URL/ID, DOI, title, year, authors, and match evidence.
+1. Lab website is checked first (Tier 0) when publication references are available from site evidence.
+2. OpenAlex is the default structured starting point (Tier 1).
+3. Semantic Scholar supplements for enrichment, ranking, and cross-checking.
+4. PubMed is required when the lab is biomedical/clinical/life-science/neuroscience.
+5. Crossref is for DOI/date/venue verification, not primary discovery.
+6. arXiv/bioRxiv/medRxiv preprints must be clearly labeled and not merged with peer-reviewed without a status field.
+7. Lab website evidence provides authoritative attribution but typically lacks abstracts; API sources supplement with metadata.
+8. Every publication candidate must retain source database, source URL/ID, DOI, title, year, authors, and match evidence.
 
 ## Match Tiers
 
@@ -114,14 +152,15 @@ When these differ, use publication year as primary and store others as supplemen
 ## Workflow
 
 1. Read lab identity and any site evidence.
-2. Create `publication_search_plan.json` with tiered source selection rationale.
-3. Search Tier 1 sources first, collect candidates into `publication_candidates.jsonl`.
-4. Evaluate Tier 1 sufficiency. If insufficient, activate Tier 2 sources.
-5. Audit PI/lab attribution and classify into match tiers → `publications.curated.json`.
-6. Write `publication_evidence.jsonl` linking publications to the lab.
-7. Produce `publication_audit.json` with matching quality metrics and source status.
-8. If `sufficient_for_profile: true`, synthesize confirmed and likely publications into `research_theme_profile.json`.
-9. If insufficient, set `insufficient_evidence: true` in theme profile and report clearly.
+2. Check Tier 0: scan `lab_site_evidence.jsonl` for publication references on the lab website.
+3. Create `publication_search_plan.json` with tiered source selection rationale.
+4. Search Tier 1 sources sequentially, collect candidates into `publication_candidates.jsonl`.
+5. Evaluate sufficiency. If insufficient, activate Tier 2 sources.
+6. Audit PI/lab attribution and classify into match tiers → `publications.curated.json`.
+7. Write `publication_evidence.jsonl` linking publications to the lab.
+8. Produce `publication_audit.json` with matching quality metrics and source status.
+9. If `sufficient_for_profile: true`, synthesize confirmed and likely publications into `research_theme_profile.json`.
+10. If insufficient, set `insufficient_evidence: true` in theme profile and report clearly.
 
 ## Validation
 
