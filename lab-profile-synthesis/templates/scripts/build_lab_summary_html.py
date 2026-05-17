@@ -471,6 +471,7 @@ section h2 {
 }
 .theme:last-child { border-bottom: none; }
 .theme-title { font-weight: 600; font-size: var(--text-base); }
+.theme-description { font-size: var(--text-sm); color: var(--text); margin-top: var(--space-1); line-height: 1.5; }
 .theme-detail { font-size: var(--text-sm); color: var(--muted); margin-top: var(--space-1); }
 
 .confidence {
@@ -852,9 +853,12 @@ def render_html(
     for t in themes:
         conf = t.get("confidence", "unknown")
         refs_str = render_refs(t.get("evidence_refs", []))
+        desc = t.get("description", "")
+        desc_html = f'<div class="theme-description">{e(desc)}</div>' if desc else ""
         themes_html += f"""
         <div class="theme">
           <div><span class="theme-title">{e(t.get("theme", ""))}</span><span class="confidence {e(conf)}">{e(conf)}</span></div>
+          {desc_html}
           <div class="theme-detail">{refs_str}</div>
         </div>"""
 

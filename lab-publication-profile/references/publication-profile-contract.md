@@ -239,7 +239,7 @@ One JSON object per line linking publications to the lab:
     "tier0_available": true,
     "tier1_sufficient": true,
     "tier2_attempted": false,
-    "stop_reason": "tier1_sufficient",
+    "stop_reason": "tier0_plus_tier1_sufficient",
     "sources": [
       {"source": "lab_website", "tier": 0, "role": "primary_context", "activated": true, "activation_reason": "publication_ref_in_site_evidence", "outcome": "found_sufficient", "candidates": 8},
       {"source": "openalex", "tier": 1, "role": "primary", "activated": true, "activation_reason": "default", "outcome": "found_sufficient", "candidates": 8, "rate_limit_state": {"request_count": 3, "retry_count": 0, "last_delay_seconds": 0, "failure_reason": null}},
@@ -335,6 +335,23 @@ If `lab_site_evidence.jsonl` does not contain `claim_type: "publication_ref"`, s
 4. If Tier 0 + Tier 1 is insufficient, activate Tier 2 sources with `activation_reason`.
 5. If all tiers are still insufficient, set `stop_reason: "all_tiers_insufficient"` and `sufficient_for_profile: false`.
 6. Agents must not proceed to theme synthesis when `sufficient_for_profile: false` unless explicitly marked `insufficient_evidence: true` in `research_theme_profile.json`.
+
+### Stop Reason Values
+
+The `source_status.stop_reason` field uses these values:
+
+| Stop Reason | Meaning |
+|---|---|
+| `tier0_plus_tier1_sufficient` | Tier 0 was activated (lab website had publication references) and combined Tier 0 + Tier 1 results are sufficient |
+| `tier1_sufficient` | Tier 0 was not activated (no publication references in site evidence) and Tier 1 alone is sufficient |
+| `insufficient_tier1` | Tier 0 + Tier 1 produced insufficient results; Tier 2 has not yet been attempted |
+| `tier1_plus_tier2_sufficient` | Tier 2 was activated and combined results across all tiers are sufficient |
+| `tier1_plus_tier2_insufficient` | All tiers attempted but results are still insufficient |
+| `all_tiers_insufficient` | All tiers exhausted, no confirmed or likely publications found |
+
+### `tier0_available` Semantics
+
+`tier0_available` is `true` when actual Tier 0 publication candidates from the lab website exist in the output (i.e., `source_db_counts["lab_website"] > 0`). It is `false` when no lab website candidates were produced, even if `lab_website` appears in the search plan.
 
 ### Source Adapter Reuse Rule
 

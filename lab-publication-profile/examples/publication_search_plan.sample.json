@@ -7,6 +7,12 @@
   "year_range": [2020, 2026],
   "search_sources": [
     {
+      "source": "lab_website",
+      "tier": 0,
+      "role": "primary_context",
+      "rationale": "Lab site evidence contains publication references; PI-curated publication list provides authoritative attribution."
+    },
+    {
       "source": "openalex",
       "tier": 1,
       "role": "primary",

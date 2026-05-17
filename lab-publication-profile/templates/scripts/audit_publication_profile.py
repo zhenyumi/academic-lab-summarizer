@@ -38,6 +38,14 @@ def write_json(path: Path, data: Any) -> None:
         fh.write("\n")
 
 
+_FALLBACK_SOURCE_META: dict[str, dict[str, Any]] = {
+    "lab_website": {"tier": 0, "role": "primary_context"},
+    "openalex": {"tier": 1, "role": "primary"},
+    "semantic_scholar": {"tier": 1, "role": "supplementary"},
+    "pubmed": {"tier": 1, "role": "conditional_primary"},
+}
+
+
 def audit(artifact_dir: Path) -> dict[str, Any]:
     plan = read_json(artifact_dir / "publication_search_plan.json", {})
     candidates = read_jsonl(artifact_dir / "publication_candidates.jsonl")
@@ -80,18 +88,31 @@ def audit(artifact_dir: Path) -> dict[str, Any]:
     if not source_status:
         sources_list = []
         for source, count in source_db_counts.items():
-            tier = 1 if source in ("openalex", "semantic_scholar", "pubmed") else 2
+            meta = _FALLBACK_SOURCE_META.get(source, {"tier": 2, "role": "supplementary"})
             sources_list.append({
-                "source": source, "tier": tier,
-                "role": "primary" if source == "openalex" else "supplementary",
+                "source": source, "tier": meta["tier"], "role": meta["role"],
                 "activated": True, "activation_reason": "default",
                 "outcome": "found_sufficient" if count > 0 else "no_results",
                 "candidates": count,
             })
+        tier0_available = any(
+            s["source"] == "lab_website" and s["activated"] for s in sources_list
+        )
+        tier1_has_results = any(
+            s["source"] != "lab_website" and s["tier"] == 1 and s.get("candidates", 0) > 0
+            for s in sources_list
+        )
+        if tier0_available and tier1_sufficient:
+            stop_reason = "tier0_plus_tier1_sufficient" if tier1_has_results else "tier0_sufficient"
+        elif tier1_sufficient:
+            stop_reason = "tier1_sufficient"
+        else:
+            stop_reason = "insufficient_tier1"
         source_status = {
+            "tier0_available": tier0_available,
             "tier1_sufficient": tier1_sufficient,
             "tier2_attempted": not tier1_sufficient,
-            "stop_reason": "tier1_sufficient" if tier1_sufficient else "insufficient_tier1",
+            "stop_reason": stop_reason,
             "sources": sources_list,
         }
 
@@ -114,7 +135,7 @@ def audit(artifact_dir: Path) -> dict[str, Any]:
         )
         repair_hints.append({
             "field": "source_tier",
-            "suggestion": "Activate Tier 2 sources (Crossref, lab website) to resolve ambiguous candidates.",
+            "suggestion": "Activate Tier 2 sources (Crossref, preprint servers) to resolve ambiguous candidates.",
         })
 
     bio = plan.get("biomedical_relevant", False)

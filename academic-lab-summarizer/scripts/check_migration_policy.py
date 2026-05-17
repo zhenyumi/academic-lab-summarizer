@@ -34,8 +34,11 @@ def check_publication_priority(errors: list[str]) -> None:
         "bioRxiv",
         "medRxiv",
         "arXiv",
+        "lab_website",
+        "Tier 0",
         "Tier 1",
         "Tier 2",
+        "primary_context",
         "publication_search_plan.json",
     ]
     for token in required:

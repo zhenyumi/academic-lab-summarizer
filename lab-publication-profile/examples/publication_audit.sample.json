@@ -9,8 +9,8 @@
     "peer_reviewed": 4,
     "preprint": 1,
     "unknown_type": 0,
-    "sources_used": ["openalex", "semantic_scholar", "pubmed", "biorxiv"],
-    "sources_returning_results": ["openalex", "semantic_scholar", "pubmed", "biorxiv"],
+    "sources_used": ["lab_website", "openalex", "semantic_scholar", "pubmed", "biorxiv"],
+    "sources_returning_results": ["lab_website", "openalex", "semantic_scholar", "pubmed", "biorxiv"],
     "sources_returning_no_results": [],
     "provenance_complete_ratio": 1.0,
     "evidence_provenance_complete_ratio": 1.0,
@@ -18,10 +18,12 @@
     "sufficient": true
   },
   "source_status": {
+    "tier0_available": true,
     "tier1_sufficient": true,
     "tier2_attempted": false,
-    "stop_reason": "tier1_sufficient",
+    "stop_reason": "tier0_plus_tier1_sufficient",
     "sources": [
+      {"source": "lab_website", "tier": 0, "role": "primary_context", "activated": true, "activation_reason": "publication_ref_in_site_evidence", "outcome": "found_sufficient", "candidates": 2},
       {"source": "openalex", "tier": 1, "role": "primary", "activated": true, "activation_reason": "default", "outcome": "found_sufficient", "candidates": 1},
       {"source": "semantic_scholar", "tier": 1, "role": "supplementary", "activated": true, "activation_reason": "default", "outcome": "found_sufficient", "candidates": 2},
       {"source": "pubmed", "tier": 1, "role": "conditional_primary", "activated": true, "activation_reason": "biomedical_relevant", "outcome": "found_sufficient", "candidates": 1},

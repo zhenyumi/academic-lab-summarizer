@@ -26,10 +26,11 @@ Google Scholar must not be used as an automated primary source.
 
 Publication search follows a tiered priority model:
 
-1. **Tier 1** (always first): OpenAlex, Semantic Scholar, PubMed (if biomedical-relevant)
-2. **Tier 2** (only if Tier 1 insufficient): Crossref, bioRxiv/medRxiv, arXiv, lab website
+1. **Tier 0** (always first, zero API cost): Lab website publication page (when site evidence contains `publication_ref`)
+2. **Tier 1** (structured API search): OpenAlex, Semantic Scholar, PubMed (if biomedical-relevant)
+3. **Tier 2** (only if Tier 0 + Tier 1 insufficient): Crossref, bioRxiv/medRxiv, arXiv
 
-The agent should evaluate Tier 1 sufficiency before expanding to Tier 2. If no source produces reliable results, stop and report clearly.
+The agent should check Tier 0 (lab website publications) first, then evaluate Tier 1 sufficiency before expanding to Tier 2. If no source produces reliable results, stop and report clearly.
 
 ## Template-First Scripts
 
@@ -62,7 +63,7 @@ python lab-publication-profile/scripts/validate_publication_profile_artifacts.py
 
 1. Read lab identity and optional site evidence.
 2. Create `publication_search_plan.json` with tiered source selection rationale.
-3. Search Tier 1 sources first, collect candidates.
+3. Check Tier 0 (lab website) first, then search Tier 1 sources, collect candidates.
 4. Evaluate Tier 1 sufficiency. If insufficient, activate Tier 2.
 5. Audit PI/lab attribution and classify into match tiers.
 6. Write `publication_audit.json` and verify status.

@@ -32,9 +32,9 @@ ALLOWED_EVIDENCE_TYPE = {
     "lab_page_overlap", "doi_match", "ambiguous_name_match", "other",
 }
 
-ALLOWED_SOURCE_ROLE = {"primary", "supplementary", "conditional_primary", "verification"}
+ALLOWED_SOURCE_ROLE = {"primary", "supplementary", "conditional_primary", "verification", "primary_context"}
 
-ALLOWED_SOURCE_TIER = {1, 2}
+ALLOWED_SOURCE_TIER = {0, 1, 2}
 
 ALLOWED_OUTCOME = {
     "found_sufficient", "found_insufficient", "no_results",
@@ -44,8 +44,10 @@ ALLOWED_OUTCOME = {
 ALLOWED_AUDIT_STATUS = {"pass", "partial", "fail"}
 
 ALLOWED_STOP_REASON = {
-    "tier1_sufficient", "insufficient_tier1",
+    "tier0_sufficient", "tier0_plus_tier1_sufficient", "tier1_sufficient",
+    "insufficient_tier1",
     "tier1_plus_tier2_sufficient", "tier1_plus_tier2_insufficient",
+    "all_tiers_insufficient",
 }
 
 
@@ -97,10 +99,16 @@ def _validate_search_plan(data: Any) -> list[str]:
             errors.append(f"{label} invalid tier: {src.get('tier')}")
         if src.get("role") not in ALLOWED_SOURCE_ROLE:
             errors.append(f"{label} invalid role: {src.get('role')}")
+    tier0_sources = {s["source"] for s in sources if s.get("tier") == 0 and "source" in s}
     tier1_sources = {s["source"] for s in sources if s.get("tier") == 1 and "source" in s}
     tier2_sources = {s["source"] for s in sources if s.get("tier") == 2 and "source" in s}
     if not tier1_sources:
         errors.append("publication_search_plan.json must have at least one tier 1 source.")
+    for s in sources:
+        if s.get("tier") == 0 and s.get("role") != "primary_context":
+            errors.append(
+                f"publication_search_plan.json: tier 0 source {s.get('source')} must have role 'primary_context'."
+            )
     if data.get("biomedical_relevant") and "pubmed" not in tier1_sources:
         errors.append(
             "publication_search_plan.json: biomedical_relevant=true but PubMed not in tier 1 sources."
@@ -220,7 +228,7 @@ def _validate_audit(data: Any) -> list[str]:
         errors.append("publication_audit.json warnings must be a list.")
     ss = data.get("source_status")
     if isinstance(ss, dict):
-        for field in ("tier1_sufficient", "tier2_attempted", "stop_reason", "sources"):
+        for field in ("tier0_available", "tier1_sufficient", "tier2_attempted", "stop_reason", "sources"):
             if field not in ss:
                 errors.append(f"publication_audit.json source_status missing field: {field}")
         if ss.get("stop_reason") and ss["stop_reason"] not in ALLOWED_STOP_REASON:

@@ -428,10 +428,12 @@ def build_lab_profile(
     research_themes = []
     for t in themes.get("themes", themes.get("research_themes", [])):
         supporting = t.get("supporting_publications", [])
+        site_ids = t.get("supporting_site_evidence_ids", [])
         research_themes.append({
             "theme": t.get("theme", t.get("name", "Unknown")),
+            "description": t.get("description", ""),
             "confidence": t.get("confidence", "medium"),
-            "evidence_refs": [f"pub:{pid}" for pid in supporting],
+            "evidence_refs": [f"pub:{pid}" for pid in supporting] + [f"site:{sid}" for sid in site_ids],
         })
 
     important_publications = build_important_publications(curated, themes)
@@ -490,6 +492,9 @@ def build_report(
     for theme in lab_profile.get("research_themes", []):
         refs_str = ", ".join(theme.get("evidence_refs", []))
         lines.append(f"**{theme['theme']}** ({theme.get('confidence', 'medium')} confidence)")
+        desc = theme.get("description", "")
+        if desc:
+            lines.append(f"{desc}")
         lines.append(f"Evidence: [{refs_str}]\n")
 
     lines.append("## Important Recent Publications (Last 3-5 Years)\n")

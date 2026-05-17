@@ -21,7 +21,7 @@ SOURCE_TIERS: dict[str, dict[str, Any]] = {
     "arxiv": {"tier": 2, "role": "supplementary", "always_activate": False},
     "biorxiv": {"tier": 2, "role": "supplementary", "always_activate": False},
     "medrxiv": {"tier": 2, "role": "supplementary", "always_activate": False},
-    "lab_website": {"tier": 2, "role": "supplementary", "always_activate": False},
+    "lab_website": {"tier": 0, "role": "primary_context", "always_activate": False, "requires": "publication_ref_in_site_evidence"},
 }
 
 
@@ -65,7 +65,12 @@ def build_search_plan(input_data: dict[str, Any]) -> dict[str, Any]:
 
     sources = []
     for source, meta in SOURCE_TIERS.items():
-        if meta["tier"] == 1 and meta.get("always_activate"):
+        if meta["tier"] == 0:
+            sources.append({
+                "source": source, "tier": 0, "role": meta["role"],
+                "rationale": "Lab site evidence contains publication references; PI-curated publication list provides authoritative attribution.",
+            })
+        elif meta["tier"] == 1 and meta.get("always_activate"):
             sources.append({
                 "source": source, "tier": 1, "role": meta["role"],
                 "rationale": "Default primary search source.",
@@ -108,6 +113,7 @@ def _build_source_status(
     tier2_attempted: bool,
     biomedical: bool,
 ) -> dict[str, Any]:
+    tier0_activated = source_db_counts.get("lab_website", 0) > 0
     sources = []
     for source, meta in SOURCE_TIERS.items():
         tier = meta["tier"]
@@ -117,7 +123,14 @@ def _build_source_status(
         activation_reason = "not_activated"
         outcome = "skipped"
 
-        if tier == 1:
+        if tier == 0:
+            activated = tier0_activated
+            activation_reason = "publication_ref_in_site_evidence" if tier0_activated else "no_publication_ref"
+            if tier0_activated:
+                outcome = "found_sufficient" if count > 0 else "no_results"
+            else:
+                outcome = "skipped"
+        elif tier == 1:
             if meta.get("always_activate"):
                 activated = True
                 activation_reason = "default"
@@ -137,7 +150,15 @@ def _build_source_status(
             "outcome": outcome, "candidates": count,
         })
 
-    if tier1_sufficient:
+    tier1_has_results = any(
+        source_db_counts.get(s, 0) > 0
+        for s, m in SOURCE_TIERS.items()
+        if m["tier"] == 1
+        and (m.get("always_activate") or (m.get("requires") == "biomedical_relevant" and biomedical))
+    )
+    if tier0_activated and tier1_sufficient:
+        stop_reason = "tier0_plus_tier1_sufficient" if tier1_has_results else "tier0_sufficient"
+    elif tier1_sufficient:
         stop_reason = "tier1_sufficient"
     elif tier2_attempted:
         stop_reason = "tier1_plus_tier2_sufficient"
@@ -145,6 +166,7 @@ def _build_source_status(
         stop_reason = "insufficient_tier1"
 
     return {
+        "tier0_available": tier0_activated,
         "tier1_sufficient": tier1_sufficient,
         "tier2_attempted": tier2_attempted,
         "stop_reason": stop_reason,
@@ -204,10 +226,29 @@ def _classify_pub_topic(candidate: dict[str, Any]) -> str:
     return best_topic if best_score > 0 else "other_research"
 
 
+def _match_site_evidence_to_topics(
+    site_evidence: list[dict[str, Any]],
+) -> dict[str, list[int]]:
+    topic_to_site_ids: dict[str, list[int]] = {}
+    for ev in site_evidence:
+        if ev.get("claim_type") != "research_direction":
+            continue
+        snippet = ev.get("snippet", "")
+        if not snippet:
+            continue
+        pseudo = {"title": snippet, "abstract": ""}
+        topic = _classify_pub_topic(pseudo)
+        ev_id = ev.get("evidence_id")
+        if isinstance(ev_id, int):
+            topic_to_site_ids.setdefault(topic, []).append(ev_id)
+    return topic_to_site_ids
+
+
 def build_curated_and_themes(
     candidates: list[dict[str, Any]],
     evidence_rows: list[dict[str, Any]],
     input_data: dict[str, Any],
+    site_evidence: list[dict[str, Any]] | None = None,
 ) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any]]:
     lab_id = input_data.get("lab_id", "unknown")
     tier_counts = {"confirmed": 0, "likely": 0, "ambiguous": 0, "rejected": 0}
@@ -280,15 +321,18 @@ def build_curated_and_themes(
         topic = _classify_pub_topic(c)
         topic_groups.setdefault(topic, []).append(c.get("candidate_id"))
 
+    site_topic_map = _match_site_evidence_to_topics(site_evidence or [])
+
     themes = []
     if confirmed_likely:
         if len(topic_groups) <= 1 or len(confirmed_likely) < 3:
+            site_ids_all = sorted({sid for ids in site_topic_map.values() for sid in ids})
             themes.append({
                 "theme_id": 1,
                 "name": "Lab research directions",
                 "description": "Derived from confirmed and likely publications.",
                 "supporting_publications": [c.get("candidate_id") for c in confirmed_likely],
-                "supporting_site_evidence_ids": [],
+                "supporting_site_evidence_ids": site_ids_all,
                 "confidence": "high" if tier_counts["confirmed"] > 0 else "medium",
             })
         else:
@@ -298,12 +342,13 @@ def build_curated_and_themes(
                 display_name, display_desc = TOPIC_DISPLAY.get(
                     topic_key, ("Research cluster " + topic_key, "Grouped by keyword overlap.")
                 )
+                site_ids = site_topic_map.get(topic_key, [])
                 themes.append({
                     "theme_id": tid,
                     "name": display_name,
                     "description": display_desc,
                     "supporting_publications": topic_groups[topic_key],
-                    "supporting_site_evidence_ids": [],
+                    "supporting_site_evidence_ids": site_ids,
                     "confidence": "high" if len(topic_groups[topic_key]) >= 2 else "medium",
                 })
 
@@ -370,6 +415,11 @@ def run(input_path: Path, output_dir: Path, fixture_dir: Path | None = None) -> 
         candidates = []
         evidence_in = []
 
+    site_evidence_path = input_path.parent / "lab_site_evidence.jsonl"
+    if not site_evidence_path.exists():
+        site_evidence_path = input_path.parent / "lab_site_evidence.sample.jsonl"
+    site_evidence = read_jsonl(site_evidence_path)
+
     lab_id = input_data.get("lab_id", "unknown")
     for i, c in enumerate(candidates):
         c["candidate_id"] = i + 1
@@ -380,7 +430,7 @@ def run(input_path: Path, output_dir: Path, fixture_dir: Path | None = None) -> 
     write_jsonl(output_dir / "publication_candidates.jsonl", candidates)
 
     curated, theme_profile, pub_evidence = build_curated_and_themes(
-        candidates, evidence_in, input_data,
+        candidates, evidence_in, input_data, site_evidence,
     )
     write_json(output_dir / "publications.curated.json", curated)
     write_jsonl(output_dir / "publication_evidence.jsonl", pub_evidence)
