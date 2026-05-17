@@ -12,10 +12,10 @@ Extract only what the lab website actually contains. Every evidence item must in
 ## Inputs
 
 - `lab_url` (required): Official lab website URL.
-- `lab_name` (required): Lab name.
-- `pi_name` (required): PI name.
+- `lab_name` (required): Lab name from curated discovery.
+- `pi_name` (required): PI name from curated discovery.
 - `institution` (required): Institution name.
-- Optional: prior notes or manually supplied lab identity evidence.
+- Optional: `labs.curated.json`, `evidence.jsonl`, `pages.jsonl` from a previous institution crawl run, or manually supplied lab identity evidence.
 
 ## Outputs
 
@@ -32,7 +32,7 @@ All outputs are written under `lab_summaries/<lab_id>/`.
 - Do not synthesize final lab profile judgments.
 - Treat link-text-only evidence as weak (`evidence_quality: link_text_only`).
 - Every evidence item must include `source_url`, `snippet`, `claim_type`, `evidence_quality`, and `extraction_status`.
-- Do not perform publication database searches.
+- Do not modify existing crawl or report artifacts.
 
 ## Evidence Quality Tiers
 

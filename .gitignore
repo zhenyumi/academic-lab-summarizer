@@ -13,3 +13,7 @@ venv/
 reports/
 lab_summaries/
 find-academic-position/
+.agents/
+.opencode/
+opencode.json
+opencode.jsonc

@@ -65,7 +65,7 @@ def find_fixture(fixtures_dir: Path | None, canonical: str, sample: str) -> Path
 
 POSITION_KEYWORDS: list[tuple[str, list[str]]] = [
     ("postdoc", ["postdoc", "postdoctoral", "post-doctoral", "fellow"]),
-    ("phd", ["phd", "ph.d", "doctoral", "graduate student"]),
+    ("phd", ["phd position", "phd", "ph.d", "ph.d.", "doctoral", "graduate student"]),
     ("masters", ["master", "msc", "m.s."]),
     ("undergraduate", ["undergraduate", "intern", "summer student"]),
     ("research_assistant", ["research assistant", " ra ", "research associate"]),
@@ -73,6 +73,14 @@ POSITION_KEYWORDS: list[tuple[str, list[str]]] = [
     ("lab_manager", ["lab manager", "laboratory manager"]),
     ("staff_scientist", ["staff scientist", "research scientist"]),
 ]
+
+APPLICATION_SIGNAL_KEYWORDS = [
+    "apply", "application", "send cv", "send your cv", "deadline", "start date",
+    "starting", "position available", "opening", "we are seeking", "we are recruiting",
+    "fall", "spring", "summer", "2025", "2026", "2027",
+]
+
+CLOSED_KEYWORDS = ["closed", "filled", "deadline passed", "no longer accepting"]
 
 
 def classify_position(snippet: str) -> str:
@@ -89,14 +97,13 @@ def classify_position_strength(snippet: str, category: str, quality: str) -> str
     text = snippet.lower()
     if category == "none":
         return "none"
-    if any(keyword in text for keyword in ["closed", "filled", "deadline passed", "no longer accepting"]):
+    if any(keyword in text for keyword in CLOSED_KEYWORDS):
         return "closed_or_past"
-    has_application_signal = any(keyword in text for keyword in [
-        "apply", "application", "send cv", "send your cv", "deadline", "start date",
-        "starting", "position available", "opening", "we are seeking", "we are recruiting",
-    ])
-    if category != "other" and has_application_signal and quality != "link_text_only":
+    has_application_signal = any(keyword in text for keyword in APPLICATION_SIGNAL_KEYWORDS)
+    if category != "other" and has_application_signal and quality in ("research_description", "profile_snippet"):
         return "confirmed_opening"
+    if category != "other" and has_application_signal:
+        return "likely_opening"
     if category != "other":
         return "likely_opening"
     return "generic_recruitment"
@@ -123,12 +130,24 @@ def build_position_signals(site_evidence: list[dict], lab_id: str) -> dict:
         else:
             confidence = "unknown"
 
+        if strength in ("confirmed_opening", "likely_opening"):
+            signal_type = f"{category}_opening" if category != "other" else "other"
+        elif strength == "generic_recruitment":
+            signal_type = "generic_recruitment"
+        elif strength == "closed_or_past":
+            signal_type = "closed_or_past"
+        elif strength == "none":
+            signal_type = "no_opening"
+        else:
+            signal_type = "other"
+
         signals.append({
             "signal_id": signal_id,
             "source_url": ev.get("source_url", ""),
             "snippet": snippet,
             "position_category": category,
             "signal_strength": strength,
+            "signal_type": signal_type,
             "details": snippet[:120] if snippet else "No details",
             "evidence_refs": [f"site:{ev.get('evidence_id', 0)}"],
             "confidence": confidence,
@@ -312,13 +331,14 @@ def build_lab_summary_assessment(
 
     assessed = sum(1 for d in dimensions if d["status"] == "assessed")
     partial = sum(1 for d in dimensions if d["status"] == "partial")
-    if assessed >= 4:
+    non_publication_assessed = sum(1 for d in dimensions if d["status"] == "assessed" and d["dimension"] != "publication_profile")
+    if non_publication_assessed >= 4:
         overall_assessment = "strong_profile"
         overall_conf = "medium"
-    elif assessed >= 3:
+    elif non_publication_assessed >= 3:
         overall_assessment = "usable_profile"
         overall_conf = "medium"
-    elif assessed + partial >= 3:
+    elif assessed + partial >= 4:
         overall_assessment = "limited_profile"
         overall_conf = "low"
     else:
