@@ -1,0 +1,27 @@
+{
+  "lab_id": "example-lab-001",
+  "research_themes": [
+    {
+      "theme_id": 1,
+      "name": "Neural crest cell migration",
+      "description": "Mechanisms of neural crest cell migration in vertebrate development using zebrafish models.",
+      "supporting_publications": [1, 5],
+      "supporting_site_evidence_ids": [1],
+      "confidence": "high"
+    },
+    {
+      "theme_id": 2,
+      "name": "Neural tube development",
+      "description": "Live imaging and analysis of neural tube closure and formation.",
+      "supporting_publications": [2],
+      "supporting_site_evidence_ids": [],
+      "confidence": "high"
+    }
+  ],
+  "peer_reviewed_publication_count": 3,
+  "preprint_count": 1,
+  "ambiguous_excluded_count": 1,
+  "ambiguous_publications_excluded": [4],
+  "insufficient_evidence": false,
+  "notes": "Research themes are derived from confirmed and likely publications only. Candidate 4 is ambiguous (partial name match, no affiliation data) and excluded."
+}

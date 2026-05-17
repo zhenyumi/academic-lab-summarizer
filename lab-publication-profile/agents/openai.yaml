@@ -1,0 +1,4 @@
+interface:
+  display_name: "Lab Publication Profile"
+  short_description: "Publication search and research theme profiling"
+  default_prompt: "Use $lab-publication-profile to search recent publications for a known lab, audit PI/lab attribution, classify candidates into match tiers, and build a research theme profile."

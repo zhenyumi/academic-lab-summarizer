@@ -1,0 +1,18 @@
+﻿{
+  "lab_url": "https://example.edu/doe-lab",
+  "allowed_domains": ["example.edu"],
+  "entry_urls": ["https://example.edu/doe-lab"],
+  "crawl_limits": {
+    "max_pages": 30,
+    "max_depth": 2,
+    "request_delay_seconds": 0.5
+  },
+  "extraction_focus": [
+    "research_direction",
+    "pi_info",
+    "lab_member",
+    "publication_ref",
+    "position_signal"
+  ],
+  "known_risks": ["Lab site may have minimal content"]
+}

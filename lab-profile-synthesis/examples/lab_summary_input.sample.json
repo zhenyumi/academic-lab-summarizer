@@ -1,0 +1,14 @@
+﻿{
+  "lab_id": "example-lab-001",
+  "lab_name": "Doe Neural Development Lab",
+  "pi_name": "Jane Doe",
+  "institution": "Example University",
+  "lab_url": "https://example.edu/doe-lab",
+  "input_mode": "from_lab_url",
+  "previous_run_artifacts": {
+    "lab_site_evidence_jsonl": "lab_summaries/example-lab-001/lab_site_evidence.jsonl",
+    "publications_curated_json": "lab_summaries/example-lab-001/publications.curated.json",
+    "publication_evidence_jsonl": "lab_summaries/example-lab-001/publication_evidence.jsonl",
+    "research_theme_profile_json": "lab_summaries/example-lab-001/research_theme_profile.json"
+  }
+}

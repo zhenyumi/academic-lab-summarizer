@@ -1,0 +1,116 @@
+{
+  "lab_id": "example-lab-001",
+  "lab_name": "Doe Neural Development Lab",
+  "pi_name": "Jane Doe",
+  "institution": "Example University",
+  "lab_url": "https://example.edu/doe-lab",
+  "research_themes": [
+    {
+      "theme": "Neural crest cell migration",
+      "confidence": "high",
+      "evidence_refs": [
+        "pub:1",
+        "pub:5"
+      ]
+    },
+    {
+      "theme": "Neural tube development",
+      "confidence": "medium",
+      "evidence_refs": [
+        "pub:2"
+      ]
+    }
+  ],
+  "important_publications": [
+    {
+      "candidate_id": 1,
+      "title": "Neural crest migration patterns in zebrafish",
+      "year": 2024,
+      "venue": "",
+      "publication_type": "peer_reviewed",
+      "match_tier": "confirmed",
+      "theme": "Neural crest cell migration",
+      "publication_overview": {
+        "one_line": "Neural crest migration patterns in zebrafish",
+        "research_question": "",
+        "key_finding": "",
+        "methods": "",
+        "significance": "Relates to lab theme: Neural crest cell migration"
+      },
+      "evidence_refs": [
+        "pub:1"
+      ]
+    },
+    {
+      "candidate_id": 2,
+      "title": "Live imaging of neural tube closure",
+      "year": 2023,
+      "venue": "",
+      "publication_type": "peer_reviewed",
+      "match_tier": "confirmed",
+      "theme": "Neural tube development",
+      "publication_overview": {
+        "one_line": "Live imaging of neural tube closure",
+        "research_question": "",
+        "key_finding": "",
+        "methods": "",
+        "significance": "Relates to lab theme: Neural tube development"
+      },
+      "evidence_refs": [
+        "pub:2"
+      ]
+    },
+    {
+      "candidate_id": 3,
+      "title": "Zebrafish models in developmental biology",
+      "year": 2022,
+      "venue": "",
+      "publication_type": "peer_reviewed",
+      "match_tier": "likely",
+      "theme": "",
+      "publication_overview": {
+        "one_line": "Zebrafish models in developmental biology",
+        "research_question": "",
+        "key_finding": "",
+        "methods": "",
+        "significance": ""
+      },
+      "evidence_refs": [
+        "pub:3"
+      ]
+    },
+    {
+      "candidate_id": 5,
+      "title": "Neural crest derivatives in vertebrates",
+      "year": 2024,
+      "venue": "",
+      "publication_type": "preprint",
+      "match_tier": "likely",
+      "theme": "Neural crest cell migration",
+      "publication_overview": {
+        "one_line": "Neural crest derivatives in vertebrates",
+        "research_question": "",
+        "key_finding": "",
+        "methods": "",
+        "significance": "Relates to lab theme: Neural crest cell migration"
+      },
+      "evidence_refs": [
+        "pub:5"
+      ]
+    }
+  ],
+  "confirmed_publication_count": 2,
+  "likely_publication_count": 2,
+  "position_signal": "confirmed_opening",
+  "overall_assessment": "strong_profile",
+  "evidence_summary": {
+    "site_evidence_count": 6,
+    "publication_evidence_count": 5,
+    "weak_evidence_ratio": 0.5
+  },
+  "limitations": [
+    "Funding indicators are unavailable.",
+    "One or more position signals are generic recruitment language, not confirmed openings.",
+    "1 publication(s) ambiguous and excluded from research themes."
+  ]
+}

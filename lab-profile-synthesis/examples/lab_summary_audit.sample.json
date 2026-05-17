@@ -1,0 +1,28 @@
+{
+  "lab_id": "example-lab-001",
+  "status": "partial",
+  "metrics": {
+    "site_evidence_count": 6,
+    "publication_evidence_count": 5,
+    "confirmed_publication_count": 2,
+    "likely_publication_count": 2,
+    "ambiguous_publications_excluded": 1,
+    "position_signals_count": 2,
+    "confirmed_position_signals": 1,
+    "generic_position_signals": 1,
+    "dimensions_assessed": 4,
+    "dimensions_partial": 1,
+    "dimensions_unavailable": 1,
+    "evidence_refs_total": 16,
+    "weak_evidence_ratio": 0.5
+  },
+  "blocking": [],
+  "warnings": [
+    "Signal 2: generic recruitment — must not be reported as a confirmed open position.",
+    "1 publication(s) ambiguous and excluded from research themes.",
+    "Funding indicators dimension is unavailable."
+  ],
+  "repair_hints": [
+    "Check lab site for grant or funding pages if funding indicators are important."
+  ]
+}

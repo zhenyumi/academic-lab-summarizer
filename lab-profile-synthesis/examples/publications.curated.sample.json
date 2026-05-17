@@ -1,0 +1,71 @@
+{
+  "lab_id": "example-lab-001",
+  "candidates": [
+    {
+      "candidate_id": 1,
+      "title": "Neural crest migration patterns in zebrafish",
+      "authors": ["Jane Doe", "John Smith"],
+      "year": 2024,
+      "publication_type": "peer_reviewed",
+      "source_db": "openalex",
+      "source_url": "https://openalex.org/W12345",
+      "doi": "10.1234/example.2024.1",
+      "match_tier": "confirmed",
+      "match_evidence": "Affiliation confirmed via author page; topic overlaps with lab site research direction."
+    },
+    {
+      "candidate_id": 2,
+      "title": "Live imaging of neural tube closure",
+      "authors": ["Jane Doe", "Alice Wang"],
+      "year": 2023,
+      "publication_type": "peer_reviewed",
+      "source_db": "pubmed",
+      "source_url": "https://pubmed.ncbi.nlm.nih.gov/12345678",
+      "doi": "10.1234/example.2023.2",
+      "match_tier": "confirmed",
+      "match_evidence": "Affiliation confirmed; topic overlaps with neural tube development research."
+    },
+    {
+      "candidate_id": 3,
+      "title": "Zebrafish models in developmental biology",
+      "authors": ["Jane Doe", "Bob Lee"],
+      "year": 2022,
+      "publication_type": "peer_reviewed",
+      "source_db": "semantic_scholar",
+      "source_url": "https://www.semanticscholar.org/paper/abc123",
+      "doi": "10.1234/example.2022.3",
+      "match_tier": "likely",
+      "match_evidence": "Affiliation confirmed; topic overlaps broadly with lab methods."
+    },
+    {
+      "candidate_id": 4,
+      "title": "CRISPR screening in model organisms",
+      "authors": ["Jane Doe"],
+      "year": 2023,
+      "publication_type": "peer_reviewed",
+      "source_db": "openalex",
+      "source_url": "https://openalex.org/W67890",
+      "doi": "10.1234/example.2023.4",
+      "match_tier": "ambiguous",
+      "match_evidence": "PI name matches but topic does not overlap with lab site research direction. Multiple Jane Doe authors exist."
+    },
+    {
+      "candidate_id": 5,
+      "title": "Neural crest derivatives in vertebrates",
+      "authors": ["Jane Doe", "Carol Chen"],
+      "year": 2024,
+      "publication_type": "preprint",
+      "source_db": "biorxiv",
+      "source_url": "https://www.biorxiv.org/content/10.1101/2024.01.01.123456",
+      "doi": "10.1101/2024.01.01.123456",
+      "match_tier": "likely",
+      "match_evidence": "Affiliation confirmed; topic overlaps with neural crest research."
+    }
+  ],
+  "tier_counts": {
+    "confirmed": 2,
+    "likely": 2,
+    "ambiguous": 1,
+    "rejected": 0
+  }
+}

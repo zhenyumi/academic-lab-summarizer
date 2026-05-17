@@ -1,0 +1,4 @@
+﻿interface:
+  display_name: "Lab Profile Synthesis"
+  short_description: "Evidence-backed lab profile, positions, and publication synthesis"
+  default_prompt: "Use $lab-profile-synthesis to synthesize an academic lab profile from site evidence and curated publication artifacts, including required position signals and publication-backed themes."

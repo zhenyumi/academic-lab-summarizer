@@ -1,0 +1,4 @@
+interface:
+  display_name: "Lab Site Evidence Extraction"
+  short_description: "Structured lab site evidence extraction"
+  default_prompt: "Use $lab-site-evidence-extraction to extract structured evidence from a known lab website, producing a site plan, evidence items with quality tiers, and a site-level audit."

@@ -1,0 +1,46 @@
+{
+  "lab_name": "Doe Neural Development Lab",
+  "pi_name": "Jane Doe",
+  "institution": "Example University",
+  "lab_type": "biomedical",
+  "biomedical_relevant": true,
+  "year_range": [2020, 2026],
+  "search_sources": [
+    {
+      "source": "openalex",
+      "tier": 1,
+      "role": "primary",
+      "rationale": "Default structured starting point for author/works lookup."
+    },
+    {
+      "source": "semantic_scholar",
+      "tier": 1,
+      "role": "supplementary",
+      "rationale": "Enrichment, ranking, and cross-checking."
+    },
+    {
+      "source": "pubmed",
+      "tier": 1,
+      "role": "conditional_primary",
+      "rationale": "Lab is neuroscience; PubMed is required for biomedical labs."
+    },
+    {
+      "source": "crossref",
+      "tier": 2,
+      "role": "verification",
+      "rationale": "Activated if Tier 1 metadata incomplete or no confirmed publications."
+    },
+    {
+      "source": "biorxiv",
+      "tier": 2,
+      "role": "supplementary",
+      "rationale": "Activated if Tier 1 has ambiguous candidates needing preprint confirmation."
+    }
+  ],
+  "excluded_sources": [
+    {
+      "source": "google_scholar",
+      "reason": "Not recommended as automated primary source."
+    }
+  ]
+}

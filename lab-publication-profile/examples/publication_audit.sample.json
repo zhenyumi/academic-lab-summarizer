@@ -1,0 +1,36 @@
+{
+  "status": "partial",
+  "metrics": {
+    "total_candidates": 5,
+    "confirmed": 2,
+    "likely": 2,
+    "ambiguous": 1,
+    "rejected": 0,
+    "peer_reviewed": 4,
+    "preprint": 1,
+    "unknown_type": 0,
+    "sources_used": ["openalex", "semantic_scholar", "pubmed", "biorxiv"],
+    "sources_returning_results": ["openalex", "semantic_scholar", "pubmed", "biorxiv"],
+    "sources_returning_no_results": [],
+    "provenance_complete_ratio": 1.0,
+    "evidence_provenance_complete_ratio": 1.0,
+    "confirmed_likely_ratio": 0.8,
+    "sufficient": true
+  },
+  "source_status": {
+    "tier1_sufficient": true,
+    "tier2_attempted": false,
+    "stop_reason": "tier1_sufficient",
+    "sources": [
+      {"source": "openalex", "tier": 1, "role": "primary", "activated": true, "activation_reason": "default", "outcome": "found_sufficient", "candidates": 1},
+      {"source": "semantic_scholar", "tier": 1, "role": "supplementary", "activated": true, "activation_reason": "default", "outcome": "found_sufficient", "candidates": 2},
+      {"source": "pubmed", "tier": 1, "role": "conditional_primary", "activated": true, "activation_reason": "biomedical_relevant", "outcome": "found_sufficient", "candidates": 1},
+      {"source": "biorxiv", "tier": 2, "role": "supplementary", "activated": false, "activation_reason": "not_activated", "outcome": "skipped", "candidates": 1}
+    ]
+  },
+  "blocking_failures": [],
+  "warnings": [
+    "One ambiguous publication (candidate 4) could not be resolved; it is excluded from research summaries."
+  ],
+  "repair_hints": []
+}

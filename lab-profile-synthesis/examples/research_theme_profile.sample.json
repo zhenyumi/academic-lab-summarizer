@@ -1,0 +1,23 @@
+{
+  "lab_id": "example-lab-001",
+  "themes": [
+    {
+      "theme": "Neural crest cell migration",
+      "supporting_publications": [1, 5],
+      "confidence": "high",
+      "notes": "Confirmed by multiple peer-reviewed and preprint publications."
+    },
+    {
+      "theme": "Neural tube development",
+      "supporting_publications": [2],
+      "confidence": "medium",
+      "notes": "Single confirmed publication on neural tube closure."
+    }
+  ],
+  "peer_reviewed_count": 3,
+  "preprint_count": 1,
+  "ambiguous_excluded_count": 1,
+  "ambiguous_publications_excluded": [4],
+  "insufficient_evidence": false,
+  "notes": "Candidate 4 excluded due to ambiguous name match and no topic overlap."
+}

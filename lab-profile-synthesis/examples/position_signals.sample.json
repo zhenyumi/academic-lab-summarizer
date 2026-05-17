@@ -1,0 +1,33 @@
+{
+  "lab_id": "example-lab-001",
+  "signals": [
+    {
+      "signal_id": 1,
+      "source_url": "https://example.edu/doe-lab/join",
+      "snippet": "We are seeking a postdoctoral fellow to study neural crest migration starting Fall 2026. Please send CV and statement through the lab contact form.",
+      "position_category": "postdoc",
+      "signal_strength": "confirmed_opening",
+      "details": "We are seeking a postdoctoral fellow to study neural crest migration starting Fall 2026. Please send CV and statement th",
+      "evidence_refs": [
+        "site:4"
+      ],
+      "confidence": "high",
+      "last_observed_or_posted_date": ""
+    },
+    {
+      "signal_id": 2,
+      "source_url": "https://example.edu/doe-lab",
+      "snippet": "Join our team!",
+      "position_category": "other",
+      "signal_strength": "generic_recruitment",
+      "details": "Join our team!",
+      "evidence_refs": [
+        "site:5"
+      ],
+      "confidence": "low",
+      "last_observed_or_posted_date": ""
+    }
+  ],
+  "overall_position_signal": "confirmed_opening",
+  "notes": "Found 2 position signal(s)."
+}

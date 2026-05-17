@@ -1,0 +1,81 @@
+{
+  "lab_id": "example-lab-001",
+  "dimensions": [
+    {
+      "dimension": "research_focus",
+      "description": "Research themes and directions evident in the lab's publications and site.",
+      "assessment": "Lab has 3 publication(s) aligned with research themes.",
+      "confidence": "high",
+      "evidence_refs": [
+        "site:2",
+        "pub:1",
+        "pub:2"
+      ],
+      "status": "assessed",
+      "limitations": []
+    },
+    {
+      "dimension": "publication_profile",
+      "description": "Recent publications, attribution confidence, and theme coverage.",
+      "assessment": "2 confirmed and 2 likely recent publication(s) support the lab profile.",
+      "confidence": "high",
+      "evidence_refs": [
+        "pub:1",
+        "pub:2",
+        "pub:3"
+      ],
+      "status": "assessed",
+      "limitations": []
+    },
+    {
+      "dimension": "position_availability",
+      "description": "Based on position signals, not inference.",
+      "assessment": "Confirmed open position signal found.",
+      "confidence": "high",
+      "evidence_refs": [
+        "site:4"
+      ],
+      "status": "assessed",
+      "limitations": []
+    },
+    {
+      "dimension": "lab_activity_and_trajectory",
+      "description": "PI career stage, lab size, publication trajectory.",
+      "assessment": "PI has 4 confirmed/likely recent publications; lab appears active.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "pub:1",
+        "pub:2",
+        "pub:3"
+      ],
+      "status": "partial",
+      "limitations": [
+        "Lab size not directly observed."
+      ]
+    },
+    {
+      "dimension": "methods_and_approaches",
+      "description": "Techniques, methods, and experimental approaches documented for the lab.",
+      "assessment": "Our lab investigates the molecular mechanisms of neural crest cell migration and neural tube closure using live imaging in zebrafish.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "site:2"
+      ],
+      "status": "assessed",
+      "limitations": []
+    },
+    {
+      "dimension": "funding_indicators",
+      "description": "Grant mentions, lab resources, institutional support.",
+      "assessment": "No funding information found on the lab site.",
+      "confidence": "unknown",
+      "evidence_refs": [],
+      "status": "unavailable",
+      "limitations": [
+        "No site evidence for funding."
+      ]
+    }
+  ],
+  "overall_assessment": "strong_profile",
+  "overall_confidence": "medium"
+}

@@ -1,0 +1,64 @@
+{
+  "lab_id": "example-lab-001",
+  "publications": [
+    {
+      "candidate_id": 1,
+      "title": "Neural crest migration patterns in zebrafish",
+      "authors": ["Jane Doe", "John Smith"],
+      "year": 2024,
+      "doi": "10.1234/example.2024.001",
+      "venue": "Developmental Biology",
+      "match_tier": "confirmed",
+      "match_rationale": "PI is author, affiliation confirmed, topic matches lab site research direction.",
+      "source_db": "openalex"
+    },
+    {
+      "candidate_id": 2,
+      "title": "Live imaging of neural tube closure",
+      "authors": ["Jane Doe", "Alice Brown"],
+      "year": 2023,
+      "doi": "10.1234/example.2023.002",
+      "venue": "Nature Communications",
+      "match_tier": "confirmed",
+      "match_rationale": "PI is author, affiliation confirmed, topic overlap with lab research, also listed on lab publications page.",
+      "source_db": "pubmed"
+    },
+    {
+      "candidate_id": 3,
+      "title": "Zebrafish models in developmental biology",
+      "authors": ["Jane Doe"],
+      "year": 2022,
+      "doi": "10.1234/example.2022.003",
+      "venue": "Developmental Dynamics",
+      "match_tier": "likely",
+      "match_rationale": "PI name matches, topic overlaps, but affiliation could not be confirmed.",
+      "source_db": "semantic_scholar"
+    },
+    {
+      "candidate_id": 5,
+      "title": "Neural crest derivatives in vertebrates",
+      "authors": ["Jane Doe", "Carol White"],
+      "year": 2024,
+      "venue": "bioRxiv",
+      "match_tier": "likely",
+      "match_rationale": "PI is author, affiliation confirmed, topic overlaps, but it is a preprint.",
+      "source_db": "biorxiv"
+    },
+    {
+      "candidate_id": 4,
+      "title": "CRISPR screening in model organisms",
+      "authors": ["J. Doe", "Alice Brown"],
+      "year": 2023,
+      "venue": "Genome Research",
+      "match_tier": "ambiguous",
+      "match_rationale": "Author initials match PI but full name not confirmed; no affiliation data; coauthor overlap exists but topic does not match lab research.",
+      "source_db": "semantic_scholar"
+    }
+  ],
+  "tier_counts": {
+    "confirmed": 2,
+    "likely": 2,
+    "ambiguous": 1,
+    "rejected": 0
+  }
+}

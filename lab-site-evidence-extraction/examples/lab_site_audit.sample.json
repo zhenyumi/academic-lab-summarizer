@@ -1,0 +1,17 @@
+﻿{
+  "status": "partial",
+  "metrics": {
+    "pages_fetched": 5,
+    "evidence_items": 6,
+    "research_direction_items": 1,
+    "position_signal_items": 2,
+    "weak_evidence_ratio": 0.33,
+    "pi_info_complete": true
+  },
+  "blocking_failures": [],
+  "warnings": [
+    "One position signal is based on generic join-us language.",
+    "Funding information is unavailable."
+  ],
+  "repair_hints": []
+}
