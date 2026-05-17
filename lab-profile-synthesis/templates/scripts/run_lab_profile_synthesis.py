@@ -112,9 +112,14 @@ def classify_position_strength(snippet: str, category: str, quality: str) -> str
 def build_position_signals(site_evidence: list[dict], lab_id: str) -> dict:
     signals = []
     signal_id = 0
-    for ev in site_evidence:
+    ev_id_counter = 0
+    for i, ev in enumerate(site_evidence):
         if ev.get("claim_type") != "position_signal":
             continue
+        ev_id = ev.get("evidence_id")
+        if ev_id is None:
+            ev_id_counter += 1
+            ev_id = ev_id_counter
         signal_id += 1
         quality = ev.get("evidence_quality", "none")
         snippet = ev.get("snippet", "")
@@ -149,7 +154,7 @@ def build_position_signals(site_evidence: list[dict], lab_id: str) -> dict:
             "signal_strength": strength,
             "signal_type": signal_type,
             "details": snippet[:120] if snippet else "No details",
-            "evidence_refs": [f"site:{ev.get('evidence_id', 0)}"],
+            "evidence_refs": [f"site:{ev_id}"],
             "confidence": confidence,
             "last_observed_or_posted_date": ev.get("last_observed_or_posted_date", ""),
         })
@@ -181,13 +186,23 @@ def build_lab_summary_assessment(
     curated: dict,
     position_signals: dict,
 ) -> dict:
-    confirmed = {c["candidate_id"] for c in curated_list(curated) if c.get("match_tier") == "confirmed"}
-    likely = {c["candidate_id"] for c in curated_list(curated) if c.get("match_tier") == "likely"}
+    confirmed = {c.get("candidate_id") for c in curated_list(curated) if c.get("match_tier") == "confirmed" and c.get("candidate_id") is not None}
+    likely = {c.get("candidate_id") for c in curated_list(curated) if c.get("match_tier") == "likely" and c.get("candidate_id") is not None}
     theme_pub_ids = set()
     for t in themes.get("themes", themes.get("research_themes", [])):
-        theme_pub_ids.update(t.get("supporting_publications", []))
+        for pid in t.get("supporting_publications", []):
+            if isinstance(pid, int):
+                theme_pub_ids.add(pid)
 
     site_research = [ev for ev in site_evidence if ev.get("claim_type") == "research_direction"]
+    _ev_id_counter = [0]
+
+    def _ev_id(ev: dict) -> int:
+        eid = ev.get("evidence_id")
+        if eid is not None:
+            return eid
+        _ev_id_counter[0] += 1
+        return _ev_id_counter[0]
 
     confirmed_signals = [s for s in position_signals.get("signals", []) if s["signal_strength"] == "confirmed_opening"]
     likely_signals = [s for s in position_signals.get("signals", []) if s["signal_strength"] == "likely_opening"]
@@ -196,7 +211,7 @@ def build_lab_summary_assessment(
     dimensions = []
 
     if theme_pub_ids:
-        dims_refs = [f"site:{ev['evidence_id']}" for ev in site_research[:2]]
+        dims_refs = [f"site:{_ev_id(ev)}" for ev in site_research[:2]]
         dims_refs += [f"pub:{pid}" for pid in list(theme_pub_ids)[:2]]
         dims_status = "assessed"
         dims_confidence = "high" if len(theme_pub_ids) >= 2 else "medium"
@@ -285,7 +300,7 @@ def build_lab_summary_assessment(
     site_methods = [ev for ev in site_evidence if ev.get("claim_type") == "research_direction"]
     if site_methods:
         mf_text = site_methods[0].get("snippet", "Methods described on lab site.")[:150]
-        mf_refs = [f"site:{site_methods[0]['evidence_id']}"]
+        mf_refs = [f"site:{_ev_id(site_methods[0])}"]
         mf_conf = "medium"
         mf_status = "assessed"
     else:
@@ -310,7 +325,7 @@ def build_lab_summary_assessment(
                         or "nsf" in ev.get("snippet", "").lower()]
     if funding_evidence:
         fi_text = "Funding information found on lab site."
-        fi_refs = [f"site:{funding_evidence[0]['evidence_id']}"]
+        fi_refs = [f"site:{_ev_id(funding_evidence[0])}"]
         fi_conf = "medium"
         fi_status = "assessed"
     else:
@@ -358,11 +373,14 @@ def build_important_publications(
     themes: dict,
 ) -> list[dict]:
     curated_list = curated.get("candidates", curated.get("publications", []))
-    candidates = {c["candidate_id"]: c for c in curated_list}
+    candidates = {}
+    for i, c in enumerate(curated_list):
+        cid = c.get("candidate_id", i + 1)
+        candidates[cid] = c
     theme_by_pub: dict[int, str] = {}
     for t in themes.get("themes", themes.get("research_themes", [])):
         for pid in t.get("supporting_publications", []):
-            if pid not in theme_by_pub:
+            if isinstance(pid, int) and pid not in theme_by_pub:
                 theme_by_pub[pid] = t.get("theme", t.get("name", ""))
 
     results = []
@@ -374,10 +392,11 @@ def build_important_publications(
     ]
     for priority_fn in priority_order:
         for c in curated_list:
-            if any(r["candidate_id"] == c["candidate_id"] for r in results):
+            cid = c.get("candidate_id", curated_list.index(c) + 1)
+            if any(r["candidate_id"] == cid for r in results):
                 continue
             if priority_fn(c):
-                theme_name = theme_by_pub.get(c["candidate_id"], "")
+                theme_name = theme_by_pub.get(cid, "")
                 abstract = c.get("abstract", "")
                 is_valid_abstract = (
                     abstract
@@ -395,7 +414,7 @@ def build_important_publications(
                 if theme_name:
                     overview["significance"] = f"Relates to lab theme: {theme_name}"
                 results.append({
-                    "candidate_id": c["candidate_id"],
+                    "candidate_id": cid,
                     "title": c.get("title", "Untitled"),
                     "year": c.get("year"),
                     "venue": c.get("venue", ""),
@@ -403,7 +422,7 @@ def build_important_publications(
                     "match_tier": c.get("match_tier", "unknown"),
                     "theme": theme_name,
                     "publication_overview": overview,
-                    "evidence_refs": [f"pub:{c['candidate_id']}"],
+                    "evidence_refs": [f"pub:{cid}"],
                 })
 
     return results
@@ -433,7 +452,7 @@ def build_lab_profile(
             "theme": t.get("theme", t.get("name", "Unknown")),
             "description": t.get("description", ""),
             "confidence": t.get("confidence", "medium"),
-            "evidence_refs": [f"pub:{pid}" for pid in supporting] + [f"site:{sid}" for sid in site_ids],
+            "evidence_refs": [f"pub:{pid}" for pid in supporting if isinstance(pid, int)] + [f"site:{sid}" for sid in site_ids if isinstance(sid, int)],
         })
 
     important_publications = build_important_publications(curated, themes)

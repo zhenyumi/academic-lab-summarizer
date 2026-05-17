@@ -541,8 +541,8 @@ section h2 {
   padding: var(--space-5);
 }
 .audit-card h3 { font-size: var(--text-base); font-weight: 600; margin-bottom: var(--space-3); }
-.audit-card .audit-metrics { font-size: var(--text-sm); display: flex; flex-wrap: wrap; gap: var(--space-3); }
-.audit-card .audit-metrics .muted { white-space: nowrap; }
+.audit-card .audit-metrics { font-size: var(--text-sm); display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: flex-start; }
+.audit-card .audit-metrics .muted { white-space: normal; }
 .audit-card .audit-warnings { font-size: var(--text-sm); margin-top: var(--space-3); }
 
 .artifacts { margin-bottom: var(--space-8); }
@@ -948,7 +948,7 @@ def render_html(
     for dim in dimensions if isinstance(dimensions, list) else []:
         if not isinstance(dim, dict):
             continue
-        dim_name = dim.get("dimension", "unknown")
+        dim_name = dim.get("dimension") or dim.get("name", "unknown")
         status_val = dim.get("status", "unknown")
         conf = dim.get("confidence", "unknown")
         assessment = dim.get("assessment", "")
@@ -962,8 +962,26 @@ def render_html(
         </tr>"""
 
     def audit_card(title: str, audit_data: dict[str, Any]) -> str:
-        st = audit_data.get("status", "unknown")
-        metrics_items = list((audit_data.get("metrics") or {}).items())[:6]
+        st = audit_data.get("status") or audit_data.get("audit_status", "unknown")
+        raw_metrics = audit_data.get("metrics") or audit_data.get("checks") or {}
+        if isinstance(raw_metrics, dict):
+            metrics_items = []
+            for k, v in raw_metrics.items():
+                if isinstance(v, (str, int, float, bool)):
+                    metrics_items.append((k, v))
+                elif isinstance(v, dict):
+                    check_name = k.replace("_", " ")
+                    check_status = v.get("status", "")
+                    check_note = v.get("note", "")
+                    if check_note:
+                        display_val = f"{check_status} \u2014 {check_note}" if check_status else check_note
+                    else:
+                        display_val = check_status or str(v)
+                    metrics_items.append((check_name, display_val))
+                if len(metrics_items) >= 6:
+                    break
+        else:
+            metrics_items = []
         warnings = (audit_data.get("warnings") or [])[:3]
         metrics_html = " ".join(f'<span class="muted">{e(k)}: {e(v)}</span>' for k, v in metrics_items)
         warn_html = "".join(f"<li>{e(w)}</li>" for w in warnings)
@@ -1356,8 +1374,8 @@ def build(lab_summaries_dir: Path) -> Path:
         "primary_report": "report.html",
         "markdown_report": "report.md",
         "artifact_dir": "artifacts",
-        "status": manifest.get("overall_status", fit_audit.get("status", "unknown")),
-        "audit_status": fit_audit.get("status", "unknown"),
+        "status": manifest.get("overall_status") or fit_audit.get("status") or fit_audit.get("audit_status", "unknown"),
+        "audit_status": fit_audit.get("status") or fit_audit.get("audit_status", "unknown"),
         "warnings_count": warnings_count,
         "lab_id": profile.get("lab_id") or manifest.get("lab_id", ""),
         "pi_name": profile.get("pi_name") or manifest.get("pi_name", ""),

@@ -116,11 +116,33 @@ def check_old_names(errors: list[str]) -> None:
                     errors.append(f"old migration name found in {path.relative_to(ROOT)}: {token}")
 
 
+def check_script_execution_required(errors: list[str]) -> None:
+    synth_skill = read(ROOT / "lab-profile-synthesis" / "SKILL.md")
+    orchestrator_skill = read(ROOT / "academic-lab-summarizer" / "SKILL.md")
+    required_in_synth = [
+        "run_lab_profile_synthesis.py",
+        "validate_lab_summary_artifacts.py",
+    ]
+    required_in_orch = [
+        "validate_lab_site_artifacts.py",
+        "validate_publication_profile_artifacts.py",
+        "validate_lab_summary_artifacts.py",
+        "must be produced by running",
+    ]
+    for token in required_in_synth:
+        if token not in synth_skill:
+            errors.append(f"lab-profile-synthesis/SKILL.md missing required token: {token}")
+    for token in required_in_orch:
+        if token not in orchestrator_skill:
+            errors.append(f"academic-lab-summarizer/SKILL.md missing required token: {token}")
+
+
 def main() -> int:
     errors: list[str] = []
     check_publication_priority(errors)
     check_position_contract(errors)
     check_old_names(errors)
+    check_script_execution_required(errors)
     if errors:
         print("INVALID: migration policy")
         for error in errors:

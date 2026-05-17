@@ -46,6 +46,8 @@ Examples: `["site:4"]`, `["pub:1", "pub:5"]`, `["site:2", "pub:3"]`
 - Every user-facing claim must have `evidence_refs` pointing to site evidence or publication evidence.
 - Mark weak or unsupported conclusions as `partial`, `unknown`, `unavailable`, or `skipped`.
 - Do not summarize ambiguous publications as lab research output.
+- All synthesis artifacts MUST be produced by running `run_lab_profile_synthesis.py`. Do not generate `position_signals.json`, `lab_summary_assessment.json`, `lab_profile.json`, `report.md`, or `lab_summary_audit.json` directly without running the script first. The AI agent may enrich script output afterwards, but the script must produce the baseline.
+- After generating artifacts, run `validate_lab_summary_artifacts.py <artifact_dir>`. If validation fails, fix the artifacts before proceeding.
 
 ## Lab Profile Richness
 
@@ -181,9 +183,9 @@ python lab-profile-synthesis/scripts/validate_lab_summary_artifacts.py --example
 python lab-profile-synthesis/scripts/validate_lab_summary_artifacts.py /path/to/lab_summaries/<lab_id>
 ```
 
-## Template-First Execution
+## Required Script Execution
 
-Copy templates into `<run>/tools/`, then adapt and execute:
+Templates MUST be copied into `<run>/tools/` and executed. Do not skip script execution:
 
 ```bash
 mkdir -p <run>/tools
