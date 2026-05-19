@@ -155,6 +155,39 @@ def validate_lab_profile(data: dict, confirmed_ids: set[int], likely_ids: set[in
             elif parsed[0] == "pub" and parsed[1] not in valid_pub_ids:
                 errors.append(f"lab_profile.json: theme '{theme.get('theme', '?')}': pub:{parsed[1]} not in confirmed/likely publications")
 
+    important = data.get("important_publications", [])
+    confirmed_plus_likely = len(confirmed_ids) + len(likely_ids)
+    if confirmed_plus_likely > 6 and len(important) > 6:
+        errors.append(
+            f"lab_profile.json: important_publications has {len(important)} entries "
+            f"but max is 6 when confirmed+likely total is {confirmed_plus_likely}"
+        )
+    if confirmed_plus_likely > 6 and len(important) == confirmed_plus_likely:
+        errors.append(
+            f"lab_profile.json: important_publications count ({len(important)}) equals "
+            f"all confirmed/likely count ({confirmed_plus_likely}) — must be a selected subset"
+        )
+    _ERRATUM_RE = __import__("re").compile(
+        r"erratum|errata|correction|corrected|corrigendum|retraction|retracted|withdrawn|"
+        r"additional file|supplementary material|supplemental file",
+        __import__("re").IGNORECASE,
+    )
+    for i, pub in enumerate(important):
+        title = pub.get("title", "")
+        if _ERRATUM_RE.search(title):
+            errors.append(
+                f"lab_profile.json: important_publications[{i}] contains erratum/correction: '{title[:80]}'"
+            )
+        ov = pub.get("publication_overview", {})
+        if not ov:
+            errors.append(f"lab_profile.json: important_publications[{i}] missing publication_overview")
+        else:
+            for field in ("research_question", "key_finding", "methods", "significance"):
+                if field not in ov:
+                    errors.append(
+                        f"lab_profile.json: important_publications[{i}] publication_overview missing '{field}'"
+                    )
+
 
 def validate_report(path: Path, errors: list[str]) -> None:
     text = path.read_text(encoding="utf-8")

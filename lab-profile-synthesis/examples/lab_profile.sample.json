@@ -32,9 +32,9 @@
       "theme": "Neural crest cell migration",
       "publication_overview": {
         "one_line": "Neural crest migration patterns in zebrafish",
-        "research_question": "",
-        "key_finding": "",
-        "methods": "",
+        "research_question": "How do neural crest cells navigate complex tissue environments during migration?",
+        "key_finding": "We identified a novel guidance mechanism involving chemokine signaling.",
+        "methods": "Live imaging in zebrafish embryos with CRISPR-mediated gene knockouts.",
         "significance": "Relates to lab theme: Neural crest cell migration"
       },
       "evidence_refs": [

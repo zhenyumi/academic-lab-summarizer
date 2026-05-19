@@ -60,7 +60,23 @@ The `lab_profile.json` output must be as complete as available evidence allows:
 - **Limitations** must be specific and actionable (at least 2 items), not generic one-liners. Examples: "No explicit position posting found on lab website or institutional job board.", "Publication profile limited to OpenAlex; Semantic Scholar cross-check recommended for citation metrics."
 - The deterministic runner generates a minimal baseline. **The AI agent must enrich the lab profile** using all available site and publication evidence.
 
-## Publication Overview Quality
+## Important Publications Selection Rules
+
+The `important_publications` section must be a **selected subset** (3–6 items) of the lab's most representative recent publications, NOT a copy of all confirmed/likely publications.
+
+### Selection Criteria
+
+| Rule | Description |
+|---|---|
+| Time window | Last 3–5 years only (default 5 years) |
+| Max items | 6 |
+| Priority order | Confirmed peer-reviewed original research > likely peer-reviewed original research > preprints |
+| Reviews | Deprioritized; only included if original research is insufficient or the review is exceptionally representative of the lab's direction |
+| Hard exclusions | Erratum, correction, corrigendum, retraction, supplementary/additional files, protocols |
+| Theme coverage | Prefer breadth across research themes over depth in one theme |
+| Evidence quality | Prefer publications with usable abstracts and match rationale |
+
+### Publication Overview Quality
 
 The `publication_overview` field in `important_publications` contains structured sub-fields that the deterministic runner populates with baseline values. When the AI agent runs this skill, it should enhance empty sub-fields using available evidence:
 
@@ -69,9 +85,9 @@ The `publication_overview` field in `important_publications` contains structured
 | Sub-field | Deterministic baseline | AI enhancement source |
 |---|---|---|
 | `one_line` | First sentence from `abstract`, or `title` if no abstract | Rewrite as a concise contribution statement (not a title rewording) using `abstract` and `match_rationale` |
-| `research_question` | Empty | Extract from `abstract` — identify the question or hypothesis the paper addresses |
-| `key_finding` | Second sentence from `abstract` if available, else empty | Extract or refine from `abstract`; may combine multiple sentences into one clear finding statement |
-| `methods` | Empty | Extract from `abstract` — identify key experimental or computational approaches |
+| `research_question` | Extracted from `abstract` using question/gap/aim signals | Refine or combine sentences; identify the core question or hypothesis |
+| `key_finding` | Extracted from `abstract` using finding/result signals, or second sentence | Extract or refine from `abstract`; may combine multiple sentences into one clear finding statement |
+| `methods` | Extracted from `abstract` using method/model/assay signals | Refine or add detail from `abstract` — identify key experimental or computational approaches |
 | `significance` | `"Relates to lab theme: {theme}"` if theme exists | Enrich using `match_rationale` and `theme` — explain how this publication connects to the lab's research direction |
 
 ### Enhancement Constraints

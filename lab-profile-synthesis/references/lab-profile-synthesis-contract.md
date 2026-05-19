@@ -237,8 +237,12 @@ Examples: `["site:4"]`, `["pub:1", "pub:5"]`, `["site:2", "pub:3"]`
 
 - `lab_id`, `lab_name`, `pi_name`, `institution`, `lab_url`.
 - `research_themes`: From confirmed and likely publications only. Each theme uses `pub:<candidate_id>` refs.
-- `important_publications`: Each entry includes `candidate_id`, `title`, `year`, `publication_type`, `match_tier`, `publication_overview` (with `one_line`, `research_question`, `key_finding`, `methods`, `significance`), and `evidence_refs`.
-- `position_signal`, `overall_assessment`, `evidence_summary`, `limitations`.
+- `important_publications`: A selected subset (3–6 items) of the lab's most representative recent publications. Each entry includes `candidate_id`, `title`, `year`, `publication_type`, `match_tier`, `publication_overview` (with `one_line`, `research_question`, `key_finding`, `methods`, `significance`), and `evidence_refs`. Selection rules:
+  - Time window: last 3–5 years only.
+  - Priority: confirmed peer-reviewed original research > likely peer-reviewed original research > preprints. Reviews/meta-analyses/perspectives are deprioritized and only included if original research is insufficient or the review is exceptionally representative.
+  - Hard exclusions: erratum, correction, corrigendum, retraction, supplementary/additional files, protocols.
+  - Theme coverage: prefer breadth across research themes over depth in one theme.
+  - Must not duplicate the full `Recent Publications` list.
 
 ## Output: `report.md`
 
@@ -248,7 +252,7 @@ Human-readable Markdown report following the structure defined in `SKILL.md`. Ev
 2. `## PI: [pi_name]`
 3. `## Institution: [institution]`
 4. `## Research Themes` — confirmed and likely only, with evidence refs
-5. `## Important Recent Publications (Last 3–5 Years)` — per-paper summaries, prioritized original research (peer-reviewed confirmed, then likely), then reviews, then preprints
+5. `## Important Recent Publications (Last 3–5 Years)` — 3–6 selected representative papers with four-part summaries (Research question, Key finding, Methods, Significance). Prioritized original research (peer-reviewed confirmed, then likely), then reviews only if necessary. Erratum/correction/supplementary entries are excluded.
 6. `## Recent Publications` — separated into Peer-reviewed, Preprints, Excluded
 7. `## Position Signals` — table with strength, category, details
 8. `## Lab Summary Assessment` — per-dimension table with confidence and evidence refs

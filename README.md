@@ -207,9 +207,6 @@ The workflow is intentionally conservative. It separates confirmed facts from li
 python lab-site-evidence-extraction/scripts/validate_lab_site_artifacts.py --examples
 python lab-publication-profile/scripts/validate_publication_profile_artifacts.py --examples
 python lab-profile-synthesis/scripts/validate_lab_summary_artifacts.py --examples
-python academic-lab-summarizer/scripts/validate_lab_summary_manifest.py --examples
-python academic-lab-summarizer/scripts/smoke_report_outputs.py
-python academic-lab-summarizer/scripts/check_migration_policy.py
 ```
 
 ## License

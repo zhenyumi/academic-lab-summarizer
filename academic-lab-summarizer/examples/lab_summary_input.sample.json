@@ -1,8 +1,0 @@
-﻿{
-  "lab_id": "example-lab-001",
-  "lab_name": "Doe Neural Development Lab",
-  "pi_name": "Jane Doe",
-  "institution": "Example University",
-  "lab_url": "https://example.edu/doe-lab",
-  "input_mode": "from_lab_url"
-}

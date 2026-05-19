@@ -368,62 +368,220 @@ def build_lab_summary_assessment(
     }
 
 
+_ERRATUM_KEYWORDS = re.compile(
+    r"erratum|errata|correction|corrected|corrigendum|retraction|retracted|withdrawn|"
+    r"additional file|supplementary material|supplemental file|protocol\b",
+    re.IGNORECASE,
+)
+
+_REVIEW_KEYWORDS = re.compile(
+    r"\breview\b|\breviews\b|systematic review|meta[\-\s]?analysis|"
+    r"\bperspective\b|\bcommentary\b|\beditorial\b|\bopinion\b|"
+    r"nature reviews|trends in\b",
+    re.IGNORECASE,
+)
+
+_METHOD_SIGNALS = re.compile(
+    r"\bmodel\b|\bcohort\b|\bassay\b|\bsequenc\w*\b|\bimaging\b|\bintervention\b|"
+    r"\btreatment\b|\bexperiment\b|\bsurvey\b|\banalysis\b|\btechnique\b|\bapproach\b|"
+    r"\bmethod\b|\bprotocol\b|\bsample\b|\bparticipant\b|\bsubject\b|\bmouse\b|\bmice\b|"
+    r"\bpatient\b|\bstudy design\b|\bclinical trial\b|\brandomized\b",
+    re.IGNORECASE,
+)
+
+_QUESTION_SIGNALS = re.compile(
+    r"\bwhether\b|\bhow\b|\bwhy\b|\bwhat\b|\brole of\b|\bimpact of\b|\beffect of\b|"
+    r"\baim\b|\bobjective\b|\bhypothesis\b|\bgoal\b|\binvestigate\b|\bexplore\b|"
+    r"\bwe sought\b|\bwe examined\b|\bwe assessed\b|\bwe evaluated\b",
+    re.IGNORECASE,
+)
+
+_FINDING_SIGNALS = re.compile(
+    r"\bwe show\b|\bwe demonstrate\b|\bwe identify\b|\bwe found\b|\bwe report\b|"
+    r"\bwe reveal\b|\bwe discover\b|\bfindings\b|\bresults\b|\bour results\b|"
+    r"\bwe observed\b|\bwe determined\b|\bwe established\b|\bour data\b",
+    re.IGNORECASE,
+)
+
+
+def _is_erratum_or_correction(title: str, abstract: str = "") -> bool:
+    combined = f"{title} {abstract}"
+    return bool(_ERRATUM_KEYWORDS.search(combined))
+
+
+def _is_review_or_non_original(title: str, abstract: str = "") -> bool:
+    combined = f"{title} {abstract}"
+    return bool(_REVIEW_KEYWORDS.search(combined))
+
+
+def _has_valid_abstract(candidate: dict) -> bool:
+    abstract = candidate.get("abstract", "")
+    return bool(
+        abstract
+        and len(abstract) >= 50
+        and abstract.strip().rstrip(".").lower() != candidate.get("title", "").strip().rstrip(".").lower()
+    )
+
+
+def _build_publication_overview(candidate: dict, theme_name: str) -> dict:
+    abstract = candidate.get("abstract", "")
+    is_valid = _has_valid_abstract(candidate)
+    overview = {
+        "one_line": "",
+        "research_question": "",
+        "key_finding": "",
+        "methods": "",
+        "significance": "",
+    }
+    if is_valid:
+        sentences = [s.strip() for s in abstract.split(".") if s.strip()]
+        overview["one_line"] = (sentences[0] + "." if sentences else abstract)[:250].strip()
+        overview["key_finding"] = _extract_finding(abstract, sentences)
+        overview["research_question"] = _extract_question(abstract, sentences)
+        overview["methods"] = _extract_methods(abstract, sentences)
+    else:
+        overview["one_line"] = candidate.get("title", "Untitled")
+    if theme_name:
+        overview["significance"] = f"Relates to lab theme: {theme_name}"
+    elif is_valid:
+        rationale = candidate.get("match_rationale", "")
+        if rationale:
+            overview["significance"] = rationale[:250].strip()
+    return overview
+
+
+def _extract_finding(abstract: str, sentences: list[str]) -> str:
+    for s in sentences:
+        if _FINDING_SIGNALS.search(s):
+            return (s + ".")[:250].strip()
+    if len(sentences) > 1:
+        return (sentences[1] + ".")[:250].strip()
+    return ""
+
+
+def _extract_question(abstract: str, sentences: list[str]) -> str:
+    for s in sentences:
+        if _QUESTION_SIGNALS.search(s):
+            return (s + ".")[:250].strip()
+    if len(sentences) > 2:
+        for s in sentences[:3]:
+            if any(w in s.lower() for w in ("unclear", "unknown", "gap", "limited", "little")):
+                return (s + ".")[:250].strip()
+    return ""
+
+
+def _extract_methods(abstract: str, sentences: list[str]) -> str:
+    method_sentences = []
+    for s in sentences:
+        if _METHOD_SIGNALS.search(s):
+            method_sentences.append(s)
+    if method_sentences:
+        return (method_sentences[0] + ".")[:250].strip()
+    return ""
+
+
+def _score_candidate(
+    c: dict,
+    theme_name: str,
+    themes_covered: set[str],
+    current_year: int,
+    recent_years: int,
+) -> float:
+    title = c.get("title", "")
+    abstract = c.get("abstract", "")
+    year = c.get("year") or 0
+    match_tier = c.get("match_tier", "")
+    pub_type = c.get("publication_type", "")
+    is_valid_abstract = _has_valid_abstract(c)
+    is_review = _is_review_or_non_original(title, abstract)
+    is_erratum = _is_erratum_or_correction(title, abstract)
+
+    if is_erratum:
+        return -1.0
+
+    score = 0.0
+
+    if match_tier == "confirmed":
+        score += 3.0
+    elif match_tier == "likely":
+        score += 1.0
+
+    if pub_type == "peer_reviewed":
+        score += 2.0
+    elif pub_type == "preprint":
+        score += 0.5
+
+    if is_review:
+        score -= 5.0
+
+    if year >= current_year - recent_years:
+        score += 1.0
+    else:
+        score -= 10.0
+
+    if is_valid_abstract:
+        score += 1.0
+
+    if theme_name and theme_name not in themes_covered:
+        score += 1.5
+
+    if is_review and score < 0:
+        score = max(score, -8.0)
+
+    return score
+
+
 def build_important_publications(
     curated: dict,
     themes: dict,
+    max_items: int = 6,
+    recent_years: int = 5,
+    current_year: int = 2026,
 ) -> list[dict]:
     curated_list = curated.get("candidates", curated.get("publications", []))
-    candidates = {}
-    for i, c in enumerate(curated_list):
-        cid = c.get("candidate_id", i + 1)
-        candidates[cid] = c
     theme_by_pub: dict[int, str] = {}
     for t in themes.get("themes", themes.get("research_themes", [])):
         for pid in t.get("supporting_publications", []):
             if isinstance(pid, int) and pid not in theme_by_pub:
                 theme_by_pub[pid] = t.get("theme", t.get("name", ""))
 
-    results = []
-    priority_order = [
-        lambda c: c.get("match_tier") == "confirmed" and c.get("publication_type") == "peer_reviewed",
-        lambda c: c.get("match_tier") == "confirmed",
-        lambda c: c.get("match_tier") == "likely" and c.get("publication_type") == "peer_reviewed",
-        lambda c: c.get("match_tier") == "likely",
-    ]
-    for priority_fn in priority_order:
-        for c in curated_list:
-            cid = c.get("candidate_id", curated_list.index(c) + 1)
-            if any(r["candidate_id"] == cid for r in results):
-                continue
-            if priority_fn(c):
-                theme_name = theme_by_pub.get(cid, "")
-                abstract = c.get("abstract", "")
-                is_valid_abstract = (
-                    abstract
-                    and len(abstract) >= 50
-                    and abstract.strip().rstrip(".").lower() != c.get("title", "").strip().rstrip(".").lower()
-                )
-                overview = {"one_line": "", "research_question": "", "key_finding": "", "methods": "", "significance": ""}
-                if is_valid_abstract:
-                    sentences = [s.strip() for s in abstract.split(".") if s.strip()]
-                    overview["one_line"] = (sentences[0] + "." if sentences else abstract)[:250].strip()
-                    if len(sentences) > 1:
-                        overview["key_finding"] = (sentences[1] + ".")[:250].strip()
-                else:
-                    overview["one_line"] = c.get("title", "Untitled")
-                if theme_name:
-                    overview["significance"] = f"Relates to lab theme: {theme_name}"
-                results.append({
-                    "candidate_id": cid,
-                    "title": c.get("title", "Untitled"),
-                    "year": c.get("year"),
-                    "venue": c.get("venue", ""),
-                    "publication_type": c.get("publication_type", "unknown"),
-                    "match_tier": c.get("match_tier", "unknown"),
-                    "theme": theme_name,
-                    "publication_overview": overview,
-                    "evidence_refs": [f"pub:{cid}"],
-                })
+    scored: list[tuple[float, int, dict]] = []
+    for idx, c in enumerate(curated_list):
+        cid = c.get("candidate_id", idx + 1)
+        tier = c.get("match_tier", "")
+        if tier not in ("confirmed", "likely"):
+            continue
+        title = c.get("title", "")
+        abstract = c.get("abstract", "")
+        if _is_erratum_or_correction(title, abstract):
+            continue
+        theme_name = theme_by_pub.get(cid, "")
+        score = _score_candidate(c, theme_name, set(), current_year, recent_years)
+        if score >= 0:
+            scored.append((score, cid, c))
+
+    scored.sort(key=lambda x: x[0], reverse=True)
+
+    results: list[dict] = []
+    themes_covered: set[str] = set()
+    for score, cid, c in scored:
+        if len(results) >= max_items:
+            break
+        theme_name = theme_by_pub.get(cid, "")
+        overview = _build_publication_overview(c, theme_name)
+        results.append({
+            "candidate_id": cid,
+            "title": c.get("title", "Untitled"),
+            "year": c.get("year"),
+            "venue": c.get("venue", ""),
+            "publication_type": c.get("publication_type", "unknown"),
+            "match_tier": c.get("match_tier", "unknown"),
+            "theme": theme_name,
+            "publication_overview": overview,
+            "evidence_refs": [f"pub:{cid}"],
+        })
+        if theme_name:
+            themes_covered.add(theme_name)
 
     return results
 
@@ -527,15 +685,16 @@ def build_report(
             ov = pub.get("publication_overview", {})
             if ov.get("one_line"):
                 lines.append(f"  - Overview: {ov['one_line']}")
-            if ov.get("research_question"):
-                lines.append(f"  - Research question: {ov['research_question']}")
-            if ov.get("key_finding"):
-                lines.append(f"  - Key finding: {ov['key_finding']}")
-            if ov.get("methods"):
-                lines.append(f"  - Methods: {ov['methods']}")
-            if ov.get("significance"):
-                lines.append(f"  - Significance: {ov['significance']}")
-            if ov and not any([ov.get("research_question"), ov.get("key_finding"), ov.get("methods")]):
+            no_abstract = not any([ov.get("research_question"), ov.get("key_finding"), ov.get("methods")])
+            rq = ov.get("research_question", "").strip() or ("Not stated in available evidence." if not no_abstract else "Not stated in available evidence.")
+            lines.append(f"  - Research question: {rq}")
+            kf = ov.get("key_finding", "").strip() or ("Not stated in available evidence." if not no_abstract else "Not stated in available evidence.")
+            lines.append(f"  - Key finding: {kf}")
+            mt = ov.get("methods", "").strip() or ("Not stated in available evidence." if not no_abstract else "Not stated in available evidence.")
+            lines.append(f"  - Methods: {mt}")
+            sg = ov.get("significance", "").strip() or "Not stated in available evidence."
+            lines.append(f"  - Significance: {sg}")
+            if no_abstract:
                 lines.append(f"  - [Overview limited — no abstract available]")
             if pub.get("theme"):
                 lines.append(f"  - Research theme: {pub['theme']}")

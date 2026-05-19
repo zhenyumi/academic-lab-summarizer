@@ -868,17 +868,19 @@ def render_html(
         ov = pub.get("publication_overview", {})
         overview_line = f'<div class="pub-one-line">{e(ov.get("one_line", ""))}</div>' if ov.get("one_line") else ""
         ov_fields = ""
+        no_abstract = not any([ov.get("research_question"), ov.get("key_finding"), ov.get("methods")])
         for field_key, label in [
             ("research_question", "Research Question"),
             ("key_finding", "Key Finding"),
             ("methods", "Methods"),
             ("significance", "Significance"),
         ]:
-            val = ov.get(field_key, "")
-            if val:
-                ov_fields += f'<div class="pub-field"><div class="pub-field-label">{e(label)}</div><div class="pub-field-value">{e(val)}</div></div>'
+            val = ov.get(field_key, "").strip()
+            if not val:
+                val = "Not stated in available evidence."
+            ov_fields += f'<div class="pub-field"><div class="pub-field-label">{e(label)}</div><div class="pub-field-value">{e(val)}</div></div>'
         ov_detail_html = f'<div class="pub-overview">{ov_fields}</div>' if ov_fields else ""
-        limited_html = '<div class="pub-overview-limited">[Overview limited: no abstract available]</div>' if ov and not any([ov.get("research_question"), ov.get("key_finding"), ov.get("methods")]) else ""
+        limited_html = '<div class="pub-overview-limited">[Overview limited: no abstract available]</div>' if no_abstract else ""
         doi_key = (pub.get("doi") or "").lower()
         cid = pub.get("candidate_id") or pub.get("curated_id")
         curated_rec = _curated_map.get(doi_key) if doi_key else None

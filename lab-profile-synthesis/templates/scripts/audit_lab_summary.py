@@ -8,6 +8,7 @@ No network calls. Copy into <run>/tools/ and adapt for real runs.
 
 import argparse
 import json
+import re
 from pathlib import Path
 
 
@@ -119,6 +120,73 @@ def audit(artifact_dir: Path) -> dict:
 
     if dims_unavail > 2:
         warnings.append(f"{dims_unavail} dimensions unavailable — limited assessment quality.")
+
+    important_pubs = profile.get("important_publications", [])
+    confirmed_plus_likely = len(confirmed) + len(likely)
+    _ERRATUM_RE = re.compile(
+        r"erratum|errata|correction|corrected|corrigendum|retraction|retracted|withdrawn|"
+        r"additional file|supplementary material|supplemental file",
+        re.IGNORECASE,
+    )
+    _REVIEW_RE = re.compile(
+        r"\breview\b|\breviews\b|systematic review|meta[\-\s]?analysis|"
+        r"\bperspective\b|\bcommentary\b|\beditorial\b|\bopinion\b|"
+        r"nature reviews|trends in\b",
+        re.IGNORECASE,
+    )
+
+    if confirmed_plus_likely > 6 and len(important_pubs) > 6:
+        warnings.append(
+            f"important_publications has {len(important_pubs)} entries — expected at most 6."
+        )
+        repair_hints.append("Reduce important_publications to 6 or fewer representative papers.")
+
+    if confirmed_plus_likely > 6 and len(important_pubs) == confirmed_plus_likely:
+        warnings.append(
+            "important_publications count equals all confirmed/likely publications — must be a selected subset."
+        )
+        repair_hints.append("Select 3-6 representative papers instead of listing all publications.")
+
+    erratum_in_important = []
+    review_in_important = []
+    old_in_important = []
+    for i, pub in enumerate(important_pubs):
+        title = pub.get("title", "")
+        if _ERRATUM_RE.search(title):
+            erratum_in_important.append(title[:80])
+        if _REVIEW_RE.search(title):
+            review_in_important.append(title[:80])
+        year = pub.get("year") or 0
+        if year > 0 and year < 2022:
+            old_in_important.append(f"{title[:60]} ({year})")
+
+    if erratum_in_important:
+        warnings.append(
+            f"important_publications contains erratum/correction entries: {erratum_in_important}"
+        )
+        repair_hints.append("Remove erratum/correction entries from important_publications.")
+
+    if review_in_important and len(review_in_important) > len(important_pubs) * 0.5:
+        warnings.append(
+            f"important_publications is review-heavy ({len(review_in_important)}/{len(important_pubs)})."
+        )
+        repair_hints.append("Prioritize original research over reviews in important_publications.")
+
+    if old_in_important:
+        warnings.append(
+            f"important_publications contains papers older than 3-5 years: {old_in_important}"
+        )
+        repair_hints.append("Remove or replace old papers with recent 3-5 year publications.")
+
+    missing_overview = 0
+    for pub in important_pubs:
+        ov = pub.get("publication_overview", {})
+        if not ov or not any([ov.get("research_question"), ov.get("key_finding"), ov.get("methods")]):
+            missing_overview += 1
+    if missing_overview > 0:
+        warnings.append(
+            f"{missing_overview}/{len(important_pubs)} important publications have incomplete overview fields."
+        )
 
     status = "fail" if blocking else ("partial" if warnings or dims_unavail > 0 else "pass")
 

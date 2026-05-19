@@ -16,12 +16,17 @@ Evidence: [pub:2]
 
 - **Neural crest migration patterns in zebrafish** (2024) [peer_reviewed, confirmed]
   - Overview: Neural crest migration patterns in zebrafish
+  - Research question: How do neural crest cells navigate complex tissue environments during migration?
+  - Key finding: We identified a novel guidance mechanism involving chemokine signaling.
+  - Methods: Live imaging in zebrafish embryos with CRISPR-mediated gene knockouts.
   - Significance: Relates to lab theme: Neural crest cell migration
-  - [Overview limited — no abstract available]
   - Research theme: Neural crest cell migration
 
 - **Live imaging of neural tube closure** (2023) [peer_reviewed, confirmed]
   - Overview: Live imaging of neural tube closure
+  - Research question: Not stated in available evidence.
+  - Key finding: Not stated in available evidence.
+  - Methods: Not stated in available evidence.
   - Significance: Relates to lab theme: Neural tube development
   - [Overview limited — no abstract available]
   - Research theme: Neural tube development
