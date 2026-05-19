@@ -1,4 +1,4 @@
-﻿---
+---
 name: lab-site-evidence-extraction
 description: "Use when an agent needs to extract structured evidence from one known academic lab website: research directions, PI info, members, publication references, facilities, and open-position/recruitment signals. Produce a lab site plan, fetched pages, structured evidence items, and a site audit. Do not search external publication databases or synthesize the final lab profile."
 ---

@@ -1,4 +1,9 @@
-﻿#!/usr/bin/env bash
+#!/usr/bin/env bash
+
+if [ -z "${BASH_VERSION:-}" ] || shopt -oq posix; then
+    echo "Error: This script requires Bash. Run with: bash $0" >&2
+    exit 1
+fi
 #
 # Shared functions for Academic Lab Summarizer install scripts.
 # Sourced by install-claude.sh, install-codex.sh, install-opencode.sh, install-openclaw.sh

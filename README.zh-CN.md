@@ -84,7 +84,7 @@ cd academic-lab-summarizer
 
 通用选项：`--categories` 用于只安装指定技能，`--update` 用于刷新已变化的技能，`--dry-run` 用于预览安装内容，`--verbose` 用于显示详细信息，`--force` 用于覆盖已安装的技能内容。
 
-> **Windows 用户：** 安装脚本是 bash 脚本。请使用 Git Bash、WSL 或其他兼容 bash 的 shell 来运行 `./install-*.sh`。
+> **平台支持：** 安装脚本是 Bash 脚本，可在 macOS、Linux 和 Windows（通过 Git Bash、WSL 或其他兼容 Bash 的 shell）上运行。不要使用 `sh`、`zsh`、原生 PowerShell 或 CMD 运行它们。
 
 ## 报告与文件
 

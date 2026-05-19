@@ -84,7 +84,7 @@ cd academic-lab-summarizer
 
 Common options across all installers: `--categories` to install only specific skills, `--update` to refresh skills that changed, `--dry-run` to preview without writing, `--verbose` for detailed output, and `--force` to overwrite existing installed skill content.
 
-> **Windows users:** The install scripts are bash scripts. Use Git Bash, WSL, or another bash-compatible shell to run `./install-*.sh`.
+> **Platform support:** The install scripts are Bash scripts. They work on macOS, Linux, and Windows (via Git Bash, WSL, or another Bash-compatible shell). Do not run them with `sh`, `zsh`, or native PowerShell/CMD.
 
 ## Reports and Files
 

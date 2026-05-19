@@ -1,4 +1,4 @@
-﻿---
+---
 name: lab-publication-profile
 description: "Use when an agent needs to search recent publications for a known lab, audit PI/lab attribution, and build research themes: given lab identity fields and optional lab site evidence, search structured sources (OpenAlex, Semantic Scholar, PubMed, Crossref, preprint servers), produce candidate publications with provenance, curate into confirmed/likely/ambiguous/rejected tiers, and output a research theme profile. Do not reopen institution-level lab discovery. Trigger when lab-summary publication profiling is requested after lab site evidence extraction or when building a publication-backed lab profile."
 ---
