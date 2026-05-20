@@ -233,6 +233,8 @@ One JSON object per line linking publications to the lab:
     "provenance_complete_ratio": 0.93,
     "evidence_provenance_complete_ratio": 0.95,
     "confirmed_likely_ratio": 0.33,
+    "abstract_coverage_ratio": 0.4,
+    "confirmed_likely_abstract_coverage_ratio": 0.6,
     "sufficient": true
   },
   "source_status": {
@@ -258,7 +260,7 @@ One JSON object per line linking publications to the lab:
 ### Required Fields
 
 - `status`: `pass`, `partial`, or `fail`.
-- `metrics`: Including tier counts, publication type counts, and provenance completeness.
+- `metrics`: Including tier counts, publication type counts, provenance completeness, `abstract_coverage_ratio`, and `confirmed_likely_abstract_coverage_ratio`.
 - `source_status`: Tiered search status with `tier0_available`, `tier1_sufficient`, `tier2_attempted`, `stop_reason`, and per-source details including `rate_limit_state` when applicable.
 - `blocking_failures`, `warnings`, `repair_hints`.
 

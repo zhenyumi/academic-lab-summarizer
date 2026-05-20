@@ -119,6 +119,7 @@ def _validate_lab_pages(rows: list[dict[str, Any]]) -> list[str]:
 
 def _validate_lab_site_evidence(rows: list[dict[str, Any]]) -> list[str]:
     errors: list[str] = []
+    has_research_direction = False
     for i, row in enumerate(rows):
         row_label = f"lab_site_evidence.jsonl row {i + 1}"
         for field in ("evidence_id", "lab_id", "source_url", "snippet",
@@ -135,6 +136,10 @@ def _validate_lab_site_evidence(rows: list[dict[str, Any]]) -> list[str]:
             errors.append(f"{row_label} invalid extraction_status: {row['extraction_status']}")
         if row.get("confidence") and row["confidence"] not in ALLOWED_CONFIDENCE:
             errors.append(f"{row_label} invalid confidence: {row['confidence']}")
+        if row.get("claim_type") == "research_direction" and row.get("extraction_status") == "extracted":
+            has_research_direction = True
+    if rows and not has_research_direction:
+        errors.append("lab_site_evidence.jsonl: missing research_direction evidence")
     return errors
 
 

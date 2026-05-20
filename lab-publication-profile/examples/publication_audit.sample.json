@@ -15,6 +15,8 @@
     "provenance_complete_ratio": 1.0,
     "evidence_provenance_complete_ratio": 1.0,
     "confirmed_likely_ratio": 0.8,
+    "abstract_coverage_ratio": 1.0,
+    "confirmed_likely_abstract_coverage_ratio": 1.0,
     "sufficient": true
   },
   "source_status": {

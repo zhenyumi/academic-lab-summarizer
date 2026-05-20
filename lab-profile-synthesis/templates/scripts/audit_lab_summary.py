@@ -179,14 +179,38 @@ def audit(artifact_dir: Path) -> dict:
         repair_hints.append("Remove or replace old papers with recent 3-5 year publications.")
 
     missing_overview = 0
+    missing_overview_fields = 0
+    full_text_count = 0
+    abstract_count = 0
+    metadata_only_count = 0
     for pub in important_pubs:
+        level = pub.get("evidence_level")
+        if level == "full_text":
+            full_text_count += 1
+        elif level == "abstract":
+            abstract_count += 1
+        elif level == "metadata_only":
+            metadata_only_count += 1
         ov = pub.get("publication_overview", {})
         if not ov or not any([ov.get("research_question"), ov.get("key_finding"), ov.get("methods")]):
             missing_overview += 1
+        for field in ("research_question", "key_finding", "methods", "significance"):
+            if not str(ov.get(field, "")).strip():
+                missing_overview_fields += 1
     if missing_overview > 0:
         warnings.append(
             f"{missing_overview}/{len(important_pubs)} important publications have incomplete overview fields."
         )
+    if missing_overview_fields > 0:
+        warnings.append(
+            f"{missing_overview_fields} important publication overview field(s) are missing overview fields."
+        )
+        repair_hints.append("Enrich important publications with open full text when available; otherwise use complete abstracts.")
+    if metadata_only_count > 0:
+        warnings.append(
+            f"{metadata_only_count}/{len(important_pubs)} important publications are metadata-only."
+        )
+        repair_hints.append("Fetch abstracts or open full text for metadata-only important publications before summarizing them.")
 
     status = "fail" if blocking else ("partial" if warnings or dims_unavail > 0 else "pass")
 
@@ -207,6 +231,10 @@ def audit(artifact_dir: Path) -> dict:
             "dimensions_unavailable": dims_unavail,
             "evidence_refs_total": len(all_refs),
             "weak_evidence_ratio": weak_ratio,
+            "important_publication_full_text_count": full_text_count,
+            "important_publication_abstract_count": abstract_count,
+            "important_publication_metadata_only_count": metadata_only_count,
+            "important_publication_missing_overview_field_count": missing_overview_fields,
         },
         "blocking": blocking,
         "warnings": warnings,

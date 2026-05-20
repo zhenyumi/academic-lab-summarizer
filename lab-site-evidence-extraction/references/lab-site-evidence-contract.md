@@ -120,6 +120,8 @@ One JSON object per line:
 - `evidence_quality`: One of `research_description`, `profile_snippet`, `link_text_only`, `none`.
 - `extraction_status`: One of `extracted`, `partial`, `unavailable`, `skipped`.
 
+At least one extracted `research_direction` evidence item is required for downstream profile synthesis. If no research-direction evidence can be extracted, the artifact is invalid rather than silently passing with only metadata or PI-info rows.
+
 ### Optional Fields
 
 - `confidence`: `high`, `medium`, `low`, or `unknown`.

@@ -10,6 +10,7 @@
       "source_db": "openalex",
       "source_url": "https://openalex.org/W12345",
       "doi": "10.1234/example.2024.1",
+      "abstract": "How neural crest cells navigate complex tissue environments during migration remains incompletely understood. Using live imaging in zebrafish embryos and CRISPR-mediated perturbation, we identify chemokine signaling as a guidance mechanism for neural crest migration. These findings define a tractable developmental mechanism aligned with neural crest biology.",
       "match_tier": "confirmed",
       "match_evidence": "Affiliation confirmed via author page; topic overlaps with lab site research direction."
     },
@@ -22,6 +23,7 @@
       "source_db": "pubmed",
       "source_url": "https://pubmed.ncbi.nlm.nih.gov/12345678",
       "doi": "10.1234/example.2023.2",
+      "abstract": "How vertebrate embryos coordinate cellular movements during neural tube closure is unclear. Using live imaging of vertebrate embryos with developmental markers, we found dynamic cell-shape changes associated with successful neural tube closure. These results connect tissue-scale morphogenesis to mechanisms studied by the lab.",
       "match_tier": "confirmed",
       "match_evidence": "PI is senior author; affiliation confirmed; topic overlaps with neural tube development research."
     },
@@ -34,6 +36,7 @@
       "source_db": "semantic_scholar",
       "source_url": "https://www.semanticscholar.org/paper/abc123",
       "doi": "10.1234/example.2022.3",
+      "abstract": "How zebrafish models can be used to study developmental biology mechanisms is a recurring question for model-organism labs. This review synthesizes literature on zebrafish developmental assays and identifies strengths and caveats for live imaging, perturbation, and developmental genetics. The synthesis supports interpretation of model-system choices in developmental biology.",
       "match_tier": "likely",
       "match_evidence": "PI listed as middle author; affiliation confirmed; topic overlaps broadly with lab methods."
     },
@@ -58,6 +61,7 @@
       "source_db": "biorxiv",
       "source_url": "https://www.biorxiv.org/content/10.1101/2024.01.01.123456",
       "doi": "10.1101/2024.01.01.123456",
+      "abstract": "Which developmental programs shape neural crest derivatives in vertebrates remains an active question. Using developmental profiling and comparative analysis, we report candidate regulatory programs linked to neural crest derivatives. These findings extend neural crest migration themes into downstream derivative specification.",
       "match_tier": "likely",
       "match_evidence": "Affiliation confirmed; topic overlaps with neural crest research."
     },
@@ -70,6 +74,7 @@
       "source_db": "lab_website",
       "source_url": "https://example.edu/doe-lab/publications",
       "doi": "10.1234/example.2024.6",
+      "abstract": "How Wnt signaling regulates neural stem cell proliferation during development is not fully resolved. Using mouse neural stem cell cultures, CRISPR perturbation, and proliferation assays, we found that Wnt pathway activity controls progenitor expansion. These findings connect signaling mechanisms to developmental growth programs.",
       "match_tier": "confirmed",
       "match_evidence": "PI is senior author; publication listed on lab website; Wnt signaling directly aligns with lab research."
     },
@@ -82,6 +87,7 @@
       "source_db": "lab_website",
       "source_url": "https://example.edu/doe-lab/publications",
       "doi": "10.1234/example.2023.7",
+      "abstract": "How neural crest delamination can be tracked across dynamic embryonic tissues remains technically challenging. Using spectral imaging of neural crest delamination, we found marker combinations that improve visualization of migrating neural crest cells. These methods support mechanistic analysis of neural crest migration.",
       "match_tier": "confirmed",
       "match_evidence": "PI is middle author; publication listed on lab website; neural crest delamination overlaps with lab research."
     }

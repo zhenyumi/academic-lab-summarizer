@@ -39,7 +39,13 @@
       },
       "evidence_refs": [
         "pub:1"
-      ]
+      ],
+      "evidence_level": "abstract",
+      "summary_source": {
+        "type": "abstract",
+        "source_url": "https://openalex.org/W12345",
+        "retrieval_status": "available"
+      }
     },
     {
       "candidate_id": 2,
@@ -51,14 +57,20 @@
       "theme": "Neural tube development",
       "publication_overview": {
         "one_line": "Live imaging of neural tube closure",
-        "research_question": "",
-        "key_finding": "",
-        "methods": "",
+        "research_question": "How do vertebrate embryos coordinate cellular movements during neural tube closure?",
+        "key_finding": "The study identifies dynamic cell-shape changes associated with successful closure.",
+        "methods": "Live imaging of vertebrate embryos with developmental markers.",
         "significance": "Relates to lab theme: Neural tube development"
       },
       "evidence_refs": [
         "pub:2"
-      ]
+      ],
+      "evidence_level": "abstract",
+      "summary_source": {
+        "type": "abstract",
+        "source_url": "https://pubmed.ncbi.nlm.nih.gov/12345678",
+        "retrieval_status": "available"
+      }
     },
     {
       "candidate_id": 3,
@@ -70,14 +82,20 @@
       "theme": "",
       "publication_overview": {
         "one_line": "Zebrafish models in developmental biology",
-        "research_question": "",
-        "key_finding": "",
-        "methods": "",
-        "significance": ""
+        "research_question": "How can zebrafish models be used to study developmental biology mechanisms?",
+        "key_finding": "The review summarizes strengths and caveats of zebrafish developmental models.",
+        "methods": "Literature synthesis focused on zebrafish developmental assays.",
+        "significance": "Supports interpretation of lab methods and model-system choices."
       },
       "evidence_refs": [
         "pub:3"
-      ]
+      ],
+      "evidence_level": "abstract",
+      "summary_source": {
+        "type": "abstract",
+        "source_url": "https://www.semanticscholar.org/paper/abc123",
+        "retrieval_status": "available"
+      }
     },
     {
       "candidate_id": 5,
@@ -89,14 +107,20 @@
       "theme": "Neural crest cell migration",
       "publication_overview": {
         "one_line": "Neural crest derivatives in vertebrates",
-        "research_question": "",
-        "key_finding": "",
-        "methods": "",
+        "research_question": "Which developmental programs shape neural crest derivatives in vertebrates?",
+        "key_finding": "The preprint reports candidate regulatory programs linked to neural crest derivatives.",
+        "methods": "Developmental profiling and comparative analysis of vertebrate neural crest derivatives.",
         "significance": "Relates to lab theme: Neural crest cell migration"
       },
       "evidence_refs": [
         "pub:5"
-      ]
+      ],
+      "evidence_level": "abstract",
+      "summary_source": {
+        "type": "abstract",
+        "source_url": "https://www.biorxiv.org/content/10.1101/2024.01.01.123456",
+        "retrieval_status": "available"
+      }
     }
   ],
   "confirmed_publication_count": 2,

@@ -420,7 +420,50 @@ def _has_valid_abstract(candidate: dict) -> bool:
         abstract
         and len(abstract) >= 50
         and abstract.strip().rstrip(".").lower() != candidate.get("title", "").strip().rstrip(".").lower()
+        and not _looks_fragmentary_text(abstract)
     )
+
+
+def _looks_fragmentary_text(text: str) -> bool:
+    stripped = re.sub(r"\s+", " ", (text or "")).strip()
+    if not stripped:
+        return True
+    first_alpha = next((ch for ch in stripped if ch.isalpha()), "")
+    if first_alpha and first_alpha.islower():
+        return True
+    return bool(re.match(r"^(and|or|but|which|that)\b", stripped))
+
+
+def _split_sentences(text: str) -> list[str]:
+    """Split prose without breaking common biomedical decimal notation."""
+    clean = re.sub(r"\s+", " ", (text or "")).strip()
+    if not clean:
+        return []
+
+    abbreviations = {"dr", "mr", "mrs", "ms", "prof", "fig", "al", "vs", "e.g", "i.e"}
+    sentences: list[str] = []
+    start = 0
+    for i, ch in enumerate(clean):
+        if ch not in ".!?":
+            continue
+        prev_ch = clean[i - 1] if i > 0 else ""
+        next_ch = clean[i + 1] if i + 1 < len(clean) else ""
+        if ch == "." and prev_ch.isdigit() and next_ch.isdigit():
+            continue
+        token = clean[start:i].strip().split(" ")[-1].rstrip(".").lower() if clean[start:i].strip() else ""
+        if ch == "." and token in abbreviations:
+            continue
+        if next_ch and not next_ch.isspace():
+            continue
+        sentence = clean[start:i].strip()
+        if sentence:
+            sentences.append(sentence)
+        start = i + 1
+
+    tail = clean[start:].strip()
+    if tail:
+        sentences.append(tail.rstrip(".!?"))
+    return sentences
 
 
 def _build_publication_overview(candidate: dict, theme_name: str) -> dict:
@@ -434,7 +477,7 @@ def _build_publication_overview(candidate: dict, theme_name: str) -> dict:
         "significance": "",
     }
     if is_valid:
-        sentences = [s.strip() for s in abstract.split(".") if s.strip()]
+        sentences = _split_sentences(abstract)
         overview["one_line"] = (sentences[0] + "." if sentences else abstract)[:250].strip()
         overview["key_finding"] = _extract_finding(abstract, sentences)
         overview["research_question"] = _extract_question(abstract, sentences)
@@ -447,6 +490,8 @@ def _build_publication_overview(candidate: dict, theme_name: str) -> dict:
         rationale = candidate.get("match_rationale", "")
         if rationale:
             overview["significance"] = rationale[:250].strip()
+        elif overview.get("key_finding"):
+            overview["significance"] = ("Evidence supports this paper as a research-relevant recent contribution: " + overview["key_finding"])[:250].strip()
     return overview
 
 
@@ -520,7 +565,7 @@ def _score_candidate(
         score -= 10.0
 
     if is_valid_abstract:
-        score += 1.0
+        score += 3.0
 
     if theme_name and theme_name not in themes_covered:
         score += 1.5
@@ -569,6 +614,7 @@ def build_important_publications(
             break
         theme_name = theme_by_pub.get(cid, "")
         overview = _build_publication_overview(c, theme_name)
+        evidence_level = "abstract" if _has_valid_abstract(c) else "metadata_only"
         results.append({
             "candidate_id": cid,
             "title": c.get("title", "Untitled"),
@@ -577,6 +623,12 @@ def build_important_publications(
             "publication_type": c.get("publication_type", "unknown"),
             "match_tier": c.get("match_tier", "unknown"),
             "theme": theme_name,
+            "evidence_level": evidence_level,
+            "summary_source": {
+                "type": evidence_level,
+                "source_url": c.get("source_url", ""),
+                "retrieval_status": "available" if evidence_level == "abstract" else "unavailable",
+            },
             "publication_overview": overview,
             "evidence_refs": [f"pub:{cid}"],
         })
@@ -584,6 +636,49 @@ def build_important_publications(
             themes_covered.add(theme_name)
 
     return results
+
+
+def enrich_important_publications_with_full_text(
+    important_publications: list[dict],
+    full_text_records: list[dict] | None = None,
+) -> list[dict]:
+    """Attach open full-text summaries to selected important publications only.
+
+    This template performs no network access. Real adapters can pass already
+    retrieved open-access records for the selected important candidate IDs.
+    """
+    records_by_id = {
+        r.get("candidate_id"): r
+        for r in (full_text_records or [])
+        if r.get("candidate_id") is not None and r.get("retrieval_status") == "available" and r.get("text")
+    }
+    enriched: list[dict] = []
+    for pub in important_publications:
+        item = dict(pub)
+        cid = item.get("candidate_id")
+        record = records_by_id.get(cid)
+        if record:
+            text = record.get("text", "")
+            item["evidence_level"] = "full_text"
+            item["summary_source"] = {
+                "type": record.get("source_type", "full_text"),
+                "source_url": record.get("source_url", ""),
+                "retrieval_status": record.get("retrieval_status", "available"),
+            }
+            if text and not _looks_fragmentary_text(text):
+                source_candidate = dict(item)
+                source_candidate["abstract"] = text
+                item["publication_overview"] = _build_publication_overview(source_candidate, item.get("theme", ""))
+        else:
+            level = item.get("evidence_level") or "metadata_only"
+            item["evidence_level"] = level
+            item.setdefault("summary_source", {
+                "type": level,
+                "source_url": "",
+                "retrieval_status": "available" if level == "abstract" else "unavailable",
+            })
+        enriched.append(item)
+    return enriched
 
 
 def build_lab_profile(
@@ -825,6 +920,34 @@ def build_audit(
     if dims_unavail > 2:
         warnings.append(f"{dims_unavail} dimensions unavailable — limited assessment quality.")
 
+    important_pubs = lab_profile.get("important_publications", [])
+    missing_overview_fields = 0
+    full_text_count = 0
+    abstract_count = 0
+    metadata_only_count = 0
+    for pub in important_pubs:
+        level = pub.get("evidence_level")
+        if level == "full_text":
+            full_text_count += 1
+        elif level == "abstract":
+            abstract_count += 1
+        elif level == "metadata_only":
+            metadata_only_count += 1
+        ov = pub.get("publication_overview", {})
+        for field in ("research_question", "key_finding", "methods", "significance"):
+            if not str(ov.get(field, "")).strip():
+                missing_overview_fields += 1
+    if missing_overview_fields > 0:
+        warnings.append(
+            f"{missing_overview_fields} important publication overview field(s) are missing overview fields."
+        )
+        repair_hints.append("Enrich important publications with open full text when available; otherwise use complete abstracts.")
+    if metadata_only_count > 0:
+        warnings.append(
+            f"{metadata_only_count}/{len(important_pubs)} important publications are metadata-only."
+        )
+        repair_hints.append("Fetch abstracts or open full text for metadata-only important publications before summarizing them.")
+
     status = "fail" if blocking else ("partial" if warnings or dims_unavail > 0 else "pass")
 
     return {
@@ -844,6 +967,10 @@ def build_audit(
             "dimensions_unavailable": dims_unavail,
             "evidence_refs_total": len(all_refs),
             "weak_evidence_ratio": weak_ratio,
+            "important_publication_full_text_count": full_text_count,
+            "important_publication_abstract_count": abstract_count,
+            "important_publication_metadata_only_count": metadata_only_count,
+            "important_publication_missing_overview_field_count": missing_overview_fields,
         },
         "blocking": blocking,
         "warnings": warnings,

@@ -226,6 +226,11 @@ def _validate_audit(data: Any) -> list[str]:
         errors.append("publication_audit.json blocking_failures must be a list.")
     if "warnings" in data and not isinstance(data["warnings"], list):
         errors.append("publication_audit.json warnings must be a list.")
+    metrics = data.get("metrics")
+    if isinstance(metrics, dict):
+        for field in ("abstract_coverage_ratio", "confirmed_likely_abstract_coverage_ratio"):
+            if field not in metrics:
+                errors.append(f"publication_audit.json metrics missing field: {field}")
     ss = data.get("source_status")
     if isinstance(ss, dict):
         for field in ("tier0_available", "tier1_sufficient", "tier2_attempted", "stop_reason", "sources"):

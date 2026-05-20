@@ -208,10 +208,16 @@ Examples: `["site:4"]`, `["pub:1", "pub:5"]`, `["site:2", "pub:3"]`
       "theme": "Neural crest cell migration",
       "publication_overview": {
         "one_line": "Describes single-cell tracking of neural crest cells during zebrafish trunk development.",
-        "research_question": "",
-        "key_finding": "",
-        "methods": "",
+        "research_question": "How do neural crest cells migrate during zebrafish trunk development?",
+        "key_finding": "The study identifies coordinated migration patterns that support trunk development.",
+        "methods": "The authors used single-cell tracking in a zebrafish model.",
         "significance": "Relates to lab theme: Neural crest cell migration"
+      },
+      "evidence_level": "abstract",
+      "summary_source": {
+        "type": "abstract",
+        "source_url": "https://doi.org/10.0000/example",
+        "retrieval_status": "available"
       },
       "evidence_refs": ["pub:1"]
     }
@@ -237,12 +243,14 @@ Examples: `["site:4"]`, `["pub:1", "pub:5"]`, `["site:2", "pub:3"]`
 
 - `lab_id`, `lab_name`, `pi_name`, `institution`, `lab_url`.
 - `research_themes`: From confirmed and likely publications only. Each theme uses `pub:<candidate_id>` refs.
-- `important_publications`: A selected subset (3–6 items) of the lab's most representative recent publications. Each entry includes `candidate_id`, `title`, `year`, `publication_type`, `match_tier`, `publication_overview` (with `one_line`, `research_question`, `key_finding`, `methods`, `significance`), and `evidence_refs`. Selection rules:
+- `important_publications`: A selected subset (3–6 items) of the lab's most representative recent publications when at least 3 confirmed/likely publications are available. Each entry includes `candidate_id`, `title`, `year`, `publication_type`, `match_tier`, `publication_overview` (with non-empty `one_line`, `research_question`, `key_finding`, `methods`, `significance`), `evidence_level` (`full_text`, `abstract`, or `metadata_only`), `summary_source`, and `evidence_refs`. Selection rules:
   - Time window: last 3–5 years only.
   - Priority: confirmed peer-reviewed original research > likely peer-reviewed original research > preprints. Reviews/meta-analyses/perspectives are deprioritized and only included if original research is insufficient or the review is exceptionally representative.
   - Hard exclusions: erratum, correction, corrigendum, retraction, supplementary/additional files, protocols.
   - Theme coverage: prefer breadth across research themes over depth in one theme.
   - Must not duplicate the full `Recent Publications` list.
+  - Only important publications may be enriched from open full text. Non-important publications remain metadata-only in the report.
+  - Full-text enrichment must use open-access sources only; if full text is unavailable, fall back to complete abstracts, then explicit metadata-only limitations.
 
 ## Output: `report.md`
 
@@ -272,6 +280,8 @@ The report builder reads the stored worker artifacts and writes:
 
 `task_id` uses `YYYYMMDDTHHMMSSZ-<slug>` and must not overwrite an existing report directory.
 
+`report.html` is mandatory and must be the manifest `primary_report`; `report.md` is the Markdown fallback and must be the manifest `markdown_report`. Markdown-only final packages are invalid and must not be indexed as successful reports.
+
 ## Output: `lab_summary_audit.json`
 
 ```json
@@ -291,7 +301,11 @@ The report builder reads the stored worker artifacts and writes:
     "dimensions_partial": 1,
     "dimensions_unavailable": 1,
     "evidence_refs_total": 12,
-    "weak_evidence_ratio": 0.33
+    "weak_evidence_ratio": 0.33,
+    "important_publication_full_text_count": 1,
+    "important_publication_abstract_count": 2,
+    "important_publication_metadata_only_count": 0,
+    "important_publication_missing_overview_field_count": 0
   },
   "blocking": [],
   "warnings": [
@@ -308,7 +322,7 @@ The report builder reads the stored worker artifacts and writes:
 
 - `lab_id`: Lab identifier.
 - `status`: `pass`, `partial`, or `fail`.
-- `metrics`: Object with quality metrics including `site_evidence_count`, `publication_evidence_count`, `confirmed_publication_count`, `likely_publication_count`, `ambiguous_publications_excluded`, `position_signals_count`, `confirmed_position_signals`, `generic_position_signals`, `dimensions_assessed`, `dimensions_partial`, `dimensions_unavailable`, `evidence_refs_total`, `weak_evidence_ratio`.
+- `metrics`: Object with quality metrics including `site_evidence_count`, `publication_evidence_count`, `confirmed_publication_count`, `likely_publication_count`, `ambiguous_publications_excluded`, `position_signals_count`, `confirmed_position_signals`, `generic_position_signals`, `dimensions_assessed`, `dimensions_partial`, `dimensions_unavailable`, `evidence_refs_total`, `weak_evidence_ratio`, important-publication evidence-level counts, and missing-overview-field counts.
 - `blocking`: Array of blocking failure strings.
 - `warnings`: Array of warning strings.
 - `repair_hints`: Array of repair suggestion strings.
@@ -322,8 +336,8 @@ The report builder reads the stored worker artifacts and writes:
 ## Validation Rules
 
 1. `position_signals.json`: `signal_strength` must be one of `confirmed_opening`, `likely_opening`, `generic_recruitment`, `closed_or_past`, `none`, `unknown`. Generic recruitment signals must not appear in blocking or in "currently open position" claims.
-2. `lab_summary_assessment.json`: Each dimension must have `status`, `confidence`, `evidence_refs`, `limitations`. Dimension names must be from the allowed set.
-3. `lab_profile.json`: `research_themes` must only reference confirmed/likely publications. Ambiguous/rejected publications must not appear.
+2. `lab_summary_assessment.json`: Must include exactly 6 dimensions. Each dimension must have non-empty `assessment`, `status`, `confidence`, `evidence_refs`, and `limitations`. Dimension names must be from the allowed set.
+3. `lab_profile.json`: `research_themes` must only reference confirmed/likely publications. Ambiguous/rejected publications must not appear. Important publications must include non-empty overview fields, `evidence_level`, and `summary_source`; `limitations` must include at least 2 specific items.
 4. `report.md`: Must contain all required sections. Every factual claim must have evidence refs.
 5. `lab_summary_audit.json`: `status` must match blocking/warnings. If blocking is non-empty, status must be `fail`.
 6. All `evidence_refs` must use namespaced format (`site:<int>` or `pub:<int>`). `site:` refs must exist in `lab_site_evidence.jsonl`. `pub:` refs must exist in `publications.curated.json` as confirmed or likely.

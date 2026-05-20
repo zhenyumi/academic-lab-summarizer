@@ -866,6 +866,17 @@ def render_html(
     for i, pub in enumerate(profile.get("important_publications", []), 1):
         refs_str = render_refs(pub.get("evidence_refs", []))
         ov = pub.get("publication_overview", {})
+        evidence_level = str(pub.get("evidence_level", "metadata_only") or "metadata_only")
+        evidence_label = evidence_level.replace("_", " ").title()
+        summary_source = pub.get("summary_source") if isinstance(pub.get("summary_source"), dict) else {}
+        source_type = summary_source.get("type", evidence_level)
+        retrieval_status = summary_source.get("retrieval_status", "unknown")
+        source_url = summary_source.get("source_url", "")
+        source_html = f'{e(source_type)} (<a href="{e(source_url)}" target="_blank" rel="noopener">open</a>)' if source_url else e(source_type)
+        evidence_meta_html = (
+            f'<div class="pub-evidence-level">Evidence: {e(evidence_label)} | '
+            f'Source: {source_html} | {e(retrieval_status)}</div>'
+        )
         overview_line = f'<div class="pub-one-line">{e(ov.get("one_line", ""))}</div>' if ov.get("one_line") else ""
         ov_fields = ""
         no_abstract = not any([ov.get("research_question"), ov.get("key_finding"), ov.get("methods")])
@@ -899,6 +910,7 @@ def render_html(
           </div>
           {authors_html}
           <div class="pub-meta">{e(venue_val)} | {e(pub.get("publication_type", ""))} | {e(pub.get("match_tier", ""))}{" | theme: " + e(pub["theme"]) if pub.get("theme") else ""}</div>
+          {evidence_meta_html}
           {overview_line}{ov_detail_html}{limited_html}
           <div class="pub-refs">{refs_str}</div>
         </div>"""
@@ -1054,6 +1066,9 @@ def render_html(
     json_files = sorted(lab_summaries_dir.glob("*.json")) + sorted(lab_summaries_dir.glob("*.jsonl"))
     for f in json_files:
         artifacts_html += f'<a href="{artifact_prefix}{e(f.name)}">{e(f.name)}</a>\n'
+    limitations_items = "".join(f"<li>{e(lim)}</li>" for lim in limitations)
+    if not limitations_items:
+        limitations_items = '<li class="muted">No limitations recorded.</li>'
 
     return f"""<!doctype html>
 <html lang="en">
@@ -1137,7 +1152,7 @@ def render_html(
 
     {evidence_sources_html}
 
-    {f'<section class="limitations" aria-label="Limitations"><h2>Limitations</h2><ul>{"".join(f"<li>{e(lim)}</li>" for lim in limitations)}</ul></section>' if limitations else ""}
+    <section class="limitations" aria-label="Limitations"><h2>Limitations</h2><ul>{limitations_items}</ul></section>
 
     <section class="artifacts" aria-label="Raw Artifacts">
       <h2>Raw Artifacts</h2>

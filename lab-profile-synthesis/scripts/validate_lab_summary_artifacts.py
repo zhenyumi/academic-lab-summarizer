@@ -22,6 +22,7 @@ DIMENSIONS = {
 DIMENSION_STATUSES = {"assessed", "partial", "unavailable", "skipped"}
 OVERALL_ASSESSMENT = {"strong_profile", "usable_profile", "limited_profile", "insufficient_evidence", "unknown"}
 AUDIT_STATUSES = {"pass", "partial", "fail"}
+EVIDENCE_LEVELS = {"full_text", "abstract", "metadata_only"}
 
 SAMPLE_NAME_MAP = {
     "lab_summary_input.json": "lab_summary_input.sample.json",
@@ -104,6 +105,8 @@ def validate_fit_assessment(data: dict, site_evidence_ids: set[int], pub_ids: se
     if "dimensions" not in data or not isinstance(data.get("dimensions"), list):
         errors.append("lab_summary_assessment.json: missing or invalid dimensions array")
         return
+    if len(data.get("dimensions", [])) != len(DIMENSIONS):
+        errors.append("lab_summary_assessment.json: must include exactly 6 dimensions")
     if "overall_assessment" not in data:
         errors.append("lab_summary_assessment.json: missing overall_assessment")
     elif data["overall_assessment"] not in OVERALL_ASSESSMENT:
@@ -119,6 +122,8 @@ def validate_fit_assessment(data: dict, site_evidence_ids: set[int], pub_ids: se
         for field in ("dimension", "description", "assessment", "confidence", "evidence_refs", "status"):
             if field not in dim:
                 errors.append(f"lab_summary_assessment.json: dimension {dname}: missing {field}")
+        if not str(dim.get("assessment", "")).strip():
+            errors.append(f"lab_summary_assessment.json: dimension {dname}: empty assessment")
         if dim.get("status") not in DIMENSION_STATUSES:
             errors.append(f"lab_summary_assessment.json: dimension {dname}: invalid status={dim.get('status')}")
         if dim.get("confidence") not in CONFIDENCE_VALUES:
@@ -157,6 +162,10 @@ def validate_lab_profile(data: dict, confirmed_ids: set[int], likely_ids: set[in
 
     important = data.get("important_publications", [])
     confirmed_plus_likely = len(confirmed_ids) + len(likely_ids)
+    if confirmed_plus_likely >= 3 and len(important) < 3:
+        errors.append(
+            f"lab_profile.json: important_publications has {len(important)} entries but expected at least 3 when enough publications exist"
+        )
     if confirmed_plus_likely > 6 and len(important) > 6:
         errors.append(
             f"lab_profile.json: important_publications has {len(important)} entries "
@@ -187,6 +196,21 @@ def validate_lab_profile(data: dict, confirmed_ids: set[int], likely_ids: set[in
                     errors.append(
                         f"lab_profile.json: important_publications[{i}] publication_overview missing '{field}'"
                     )
+                elif not str(ov.get(field, "")).strip():
+                    errors.append(
+                        f"lab_profile.json: important_publications[{i}] publication_overview empty '{field}'"
+                    )
+        if "evidence_level" not in pub:
+            errors.append(f"lab_profile.json: important_publications[{i}] missing evidence_level")
+        elif pub.get("evidence_level") not in EVIDENCE_LEVELS:
+            errors.append(f"lab_profile.json: important_publications[{i}] invalid evidence_level={pub.get('evidence_level')}")
+        if "summary_source" not in pub or not isinstance(pub.get("summary_source"), dict):
+            errors.append(f"lab_profile.json: important_publications[{i}] missing summary_source")
+
+    limitations = data.get("limitations", [])
+    specific_limitations = [lim for lim in limitations if len(str(lim).strip()) >= 20]
+    if len(specific_limitations) < 2:
+        errors.append("lab_profile.json: limitations must include at least 2 specific items")
 
 
 def validate_report(path: Path, errors: list[str]) -> None:
@@ -207,6 +231,53 @@ def validate_report(path: Path, errors: list[str]) -> None:
     for section in required_sections:
         if section not in text:
             errors.append(f"report.md: missing required section '{section}'")
+
+
+def validate_report_package(report_dir: Path) -> list[str]:
+    """Validate the canonical user-facing report package.
+
+    Worker artifacts can include a Markdown report, but the final report package
+    must be HTML-first so the index never points users at Markdown fallback only.
+    """
+    errors: list[str] = []
+
+    html_path = report_dir / "report.html"
+    markdown_path = report_dir / "report.md"
+    manifest_path = report_dir / "report_manifest.json"
+    assets_path = report_dir / "assets"
+    artifacts_path = report_dir / "artifacts"
+
+    if not html_path.is_file():
+        errors.append("report.html: not found")
+    if not markdown_path.is_file():
+        errors.append("report.md: not found")
+    if not assets_path.is_dir():
+        errors.append("assets/: not found")
+    if not artifacts_path.is_dir():
+        errors.append("artifacts/: not found")
+
+    if not manifest_path.is_file():
+        errors.append("report_manifest.json: not found")
+        return errors
+
+    try:
+        manifest = load_json(manifest_path)
+    except json.JSONDecodeError as e:
+        errors.append(f"report_manifest.json: invalid JSON: {e}")
+        return errors
+
+    primary_report = manifest.get("primary_report")
+    markdown_report = manifest.get("markdown_report")
+    if primary_report != "report.html":
+        errors.append("report_manifest.json: primary_report must be report.html")
+    if markdown_report != "report.md":
+        errors.append("report_manifest.json: markdown_report must be report.md")
+    if primary_report and not (report_dir / str(primary_report)).is_file():
+        errors.append(f"report_manifest.json: primary_report target not found: {primary_report}")
+    if markdown_report and not (report_dir / str(markdown_report)).is_file():
+        errors.append(f"report_manifest.json: markdown_report target not found: {markdown_report}")
+
+    return errors
 
 
 def validate_audit(data: dict, errors: list[str]) -> None:
@@ -293,7 +364,24 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Validate lab profile synthesis artifacts")
     parser.add_argument("artifact_dir", nargs="?", help="Directory containing artifacts")
     parser.add_argument("--examples", action="store_true", help="Validate .sample. files in examples/")
+    parser.add_argument("--report-package", action="store_true", help="Validate final reports/lab-summaries/<task_id>/ package")
     args = parser.parse_args()
+
+    if args.report_package:
+        if not args.artifact_dir:
+            parser.error("artifact_dir is required when --report-package is used")
+        report_dir = Path(args.artifact_dir)
+        if not report_dir.is_dir():
+            print(f"INVALID report package: not a directory: {report_dir}", file=sys.stderr)
+            return 1
+        errors = validate_report_package(report_dir)
+        if errors:
+            print(f"INVALID report package: {report_dir}", file=sys.stderr)
+            for e in errors:
+                print(f"  - {e}", file=sys.stderr)
+            return 1
+        print(f"VALID report package: {report_dir}")
+        return 0
 
     if args.examples:
         base = Path(__file__).resolve().parent.parent / "examples"
