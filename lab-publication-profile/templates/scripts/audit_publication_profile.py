@@ -8,9 +8,16 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from collections import Counter
 from pathlib import Path
 from typing import Any
+
+try:
+    from run_publication_profile import candidate_needs_abstract, compute_abstract_coverage
+except ImportError:
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from run_publication_profile import candidate_needs_abstract, compute_abstract_coverage
 
 
 def read_json(path: Path, default: Any) -> Any:
@@ -141,11 +148,30 @@ def audit(artifact_dir: Path) -> dict[str, Any]:
     bio = plan.get("biomedical_relevant", False)
     if bio and "pubmed" not in sources_returning:
         warnings.append("PubMed returned 0 candidates for this biomedical lab.")
+        repair_hints.append({
+            "field": "pubmed",
+            "suggestion": "For biomedical labs, verify PubMed search terms and try PMID/DOI-based lookup "
+            "for confirmed candidates to retrieve abstracts.",
+        })
 
     if pub_type_counts.get("unknown", 0) > 0:
         warnings.append(
             f"{pub_type_counts['unknown']} candidate(s) have unknown publication type."
         )
+
+    abstract_cov_all = compute_abstract_coverage(candidates)
+    abstract_cov_cl = compute_abstract_coverage(candidates, tiers=("confirmed", "likely"))
+    if abstract_cov_cl["coverage_ratio"] < 0.5 and abstract_cov_cl["total"] > 0:
+        warnings.append(
+            f"Abstract coverage is low: {abstract_cov_cl['with_abstract']}/{abstract_cov_cl['total']} "
+            f"confirmed/likely publications have abstracts."
+        )
+        repair_hints.append({
+            "field": "abstract",
+            "suggestion": "Enrich publication metadata: use DOI-based lookup from OpenAlex, PubMed, "
+            "Semantic Scholar, or Crossref to retrieve missing abstracts. "
+            "Do not fabricate summaries from titles alone.",
+        })
 
     status = "fail" if blocking else ("partial" if warnings else "pass")
 
@@ -166,6 +192,8 @@ def audit(artifact_dir: Path) -> dict[str, Any]:
             "provenance_complete_ratio": prov_ratio,
             "evidence_provenance_complete_ratio": ev_prov_ratio,
             "confirmed_likely_ratio": confirmed_likely_ratio,
+            "abstract_coverage_ratio": abstract_cov_all["coverage_ratio"],
+            "confirmed_likely_abstract_coverage_ratio": abstract_cov_cl["coverage_ratio"],
             "sufficient": sufficient,
         },
         "source_status": source_status,

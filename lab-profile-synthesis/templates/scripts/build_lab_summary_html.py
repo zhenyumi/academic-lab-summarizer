@@ -1030,21 +1030,26 @@ def render_html(
           </div>"""
 
     evidence_pub_html = ""
-    for eid in sorted(_pub_ev.keys()):
-        item = _pub_ev[eid]
-        snippet = e(item.get("snippet", ""))
+    for cid in sorted(_pub_ev.keys()):
+        item = _pub_ev[cid]
+        description = e(item.get("description", ""))
         source_url = item.get("source_url", "")
-        doi = item.get("pub_doi", "")
-        match_tier = e(item.get("match_tier", ""))
+        evidence_type = e(item.get("evidence_type", ""))
+        confidence = e(item.get("confidence", ""))
+        curated_rec = _curated_map.get(f"cid:{cid}") or {}
+        pub_title = e(curated_rec.get("title", f"Candidate {cid}"))
+        pub_doi = curated_rec.get("doi", "")
         url_link = f'<a class="evidence-url" href="{e(source_url)}" target="_blank" rel="noopener">{e(source_url)}</a>' if source_url else ""
-        doi_link = f'<a class="evidence-url" href="https://doi.org/{e(doi)}" target="_blank" rel="noopener">{e(doi)}</a>' if doi else ""
+        doi_link = f'<a class="evidence-url" href="https://doi.org/{e(pub_doi)}" target="_blank" rel="noopener">{e(pub_doi)}</a>' if pub_doi else ""
         evidence_pub_html += f"""
-          <div class="evidence-item" id="evidence-pub-{eid}">
+          <div class="evidence-item" id="evidence-pub-{cid}">
             <div class="evidence-item-header">
-              <span class="evidence-id">pub:{eid}</span>
-              <span class="evidence-badge {e(match_tier)}">{e(match_tier)}</span>
+              <span class="evidence-id">pub:{cid}</span>
+              <span class="evidence-badge {e(evidence_type)}">{e(evidence_type)}</span>
+              <span class="evidence-badge {e(confidence)}">{e(confidence)}</span>
             </div>
-            <div class="evidence-snippet">{snippet}</div>
+            <div class="evidence-pub-title">{pub_title}</div>
+            <div class="evidence-snippet">{description}</div>
             {doi_link}{url_link}
           </div>"""
 
@@ -1319,7 +1324,24 @@ def build(lab_summaries_dir: Path) -> Path:
     site_ev_map: dict[int, dict[str, Any]] = {item.get("evidence_id", i): item for i, item in enumerate(site_ev_items)}
 
     pub_ev_items = read_jsonl(lab_summaries_dir / "publication_evidence.jsonl")
-    pub_ev_map: dict[int, dict[str, Any]] = {item.get("evidence_id", i): item for i, item in enumerate(pub_ev_items)}
+    pub_ev_by_candidate: dict[int, list[dict[str, Any]]] = {}
+    for item in pub_ev_items:
+        cid = item.get("candidate_id")
+        if isinstance(cid, int):
+            pub_ev_by_candidate.setdefault(cid, []).append(item)
+    pub_ev_map: dict[int, dict[str, Any]] = {}
+    for cid, items in pub_ev_by_candidate.items():
+        descriptions = [it.get("description", "") for it in items if it.get("description")]
+        source_urls = [it.get("source_url", "") for it in items if it.get("source_url")]
+        combined = {
+            "candidate_id": cid,
+            "evidence_type": ",".join(sorted(set(it.get("evidence_type", "") for it in items))),
+            "description": " | ".join(descriptions),
+            "source_url": source_urls[0] if source_urls else "",
+            "confidence": items[0].get("confidence", "medium"),
+            "_count": len(items),
+        }
+        pub_ev_map[cid] = combined
 
     pi_name = profile.get("pi_name", manifest.get("pi_name", ""))
     curated_data = read_json(lab_summaries_dir / "publications.curated.json", None)

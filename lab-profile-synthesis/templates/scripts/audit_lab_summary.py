@@ -183,6 +183,7 @@ def audit(artifact_dir: Path) -> dict:
     full_text_count = 0
     abstract_count = 0
     metadata_only_count = 0
+    missing_abstract_pubs = []
     for pub in important_pubs:
         level = pub.get("evidence_level")
         if level == "full_text":
@@ -194,12 +195,18 @@ def audit(artifact_dir: Path) -> dict:
         ov = pub.get("publication_overview", {})
         if not ov or not any([ov.get("research_question"), ov.get("key_finding"), ov.get("methods")]):
             missing_overview += 1
+            missing_abstract_pubs.append(pub.get("title", "")[:60])
         for field in ("research_question", "key_finding", "methods", "significance"):
             if not str(ov.get(field, "")).strip():
                 missing_overview_fields += 1
     if missing_overview > 0:
         warnings.append(
             f"{missing_overview}/{len(important_pubs)} important publications have incomplete overview fields."
+        )
+        repair_hints.append(
+            "Important publications have incomplete overviews because their abstracts or open full text are missing. "
+            "Enrich publication metadata using DOI-based lookup from OpenAlex, PubMed, Semantic Scholar, "
+            "Crossref, or open full-text sources. Do not fabricate summaries from titles alone."
         )
     if missing_overview_fields > 0:
         warnings.append(

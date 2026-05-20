@@ -9,8 +9,208 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 from pathlib import Path
 from typing import Any
+
+
+def reconstruct_openalex_abstract(abstract_inverted_index: dict[str, list[int | None]] | None) -> str:
+    """Reconstruct abstract text from OpenAlex abstract_inverted_index format.
+
+    OpenAlex stores abstracts as an inverted index mapping each word to a list
+    of positions where it appears. This function reconstructs the original text
+    by placing words at their correct positions.
+
+    Args:
+        abstract_inverted_index: Dict mapping words to lists of integer positions.
+            Example: {"The": [0], "cat": [1], "sat": [2]}
+
+    Returns:
+        Reconstructed abstract text, or empty string if input is None/empty.
+    """
+    if not abstract_inverted_index:
+        return ""
+    max_pos = -1
+    for positions in abstract_inverted_index.values():
+        for pos in positions:
+            if isinstance(pos, int) and pos > max_pos:
+                max_pos = pos
+    if max_pos < 0:
+        return ""
+    words: list[str] = [""] * (max_pos + 1)
+    for word, positions in abstract_inverted_index.items():
+        for pos in positions:
+            if isinstance(pos, int) and 0 <= pos <= max_pos:
+                words[pos] = word
+    return " ".join(w for w in words if w)
+
+
+def normalize_doi(doi: str | None) -> str:
+    """Normalize a DOI string to lowercase with common prefixes stripped.
+
+    Args:
+        doi: Raw DOI string, possibly with URL prefix or 'doi:' prefix.
+
+    Returns:
+        Normalized lowercase DOI, or empty string if input is None/empty.
+    """
+    if not doi:
+        return ""
+    doi = doi.strip()
+    for prefix in ("https://doi.org/", "http://doi.org/", "doi:"):
+        if doi.lower().startswith(prefix):
+            doi = doi[len(prefix):]
+            break
+    return doi.lower()
+
+
+def validate_source_record(
+    candidate: dict[str, Any],
+    fetched_record: dict[str, Any] | None,
+) -> dict[str, Any]:
+    """Validate that a fetched source record matches the candidate's DOI/title.
+
+    Args:
+        candidate: The publication candidate dict with doi, source_id, source_db.
+        fetched_record: The fetched record from the source API, or None if 404.
+
+    Returns:
+        Dict with 'valid' (bool) and 'issues' (list of str).
+    """
+    issues: list[str] = []
+    if fetched_record is None:
+        issues.append("Source ID not found (404)")
+        return {"valid": False, "issues": issues}
+
+    cand_doi = normalize_doi(candidate.get("doi"))
+    fetched_doi_raw = fetched_record.get("doi", "")
+    fetched_doi = normalize_doi(fetched_doi_raw)
+
+    if cand_doi and fetched_doi and cand_doi != fetched_doi:
+        issues.append(f"DOI mismatch: candidate={cand_doi}, fetched={fetched_doi}")
+
+    cand_source_id = candidate.get("source_id", "")
+    fetched_id = fetched_record.get("id", "")
+    if cand_source_id and fetched_id and cand_source_id != fetched_id:
+        issues.append(f"Source ID mismatch: candidate={cand_source_id}, fetched={fetched_id}")
+
+    cand_title = (candidate.get("title", "") or "").strip().lower()
+    fetched_title = (fetched_record.get("title", "") or "").strip().lower()
+    if cand_title and fetched_title:
+        cand_norm = re.sub(r"\s+", " ", cand_title)
+        fetch_norm = re.sub(r"\s+", " ", fetched_title)
+        if cand_norm != fetch_norm and not cand_norm.startswith(fetch_norm[:50]):
+            issues.append(f"Title mismatch: candidate='{cand_title[:60]}', fetched='{fetched_title[:60]}'")
+
+    return {"valid": len(issues) == 0, "issues": issues}
+
+
+def candidate_needs_abstract(candidate: dict[str, Any]) -> bool:
+    """Check if a candidate publication needs abstract enrichment.
+
+    A candidate needs enrichment if:
+    - Its abstract is empty or missing
+    - Its abstract is identical to its title (not real content)
+    - Its abstract is too short (< 50 chars)
+
+    Args:
+        candidate: Publication candidate dict.
+
+    Returns:
+        True if the candidate needs abstract enrichment.
+    """
+    abstract = candidate.get("abstract", "")
+    if not abstract or len(abstract.strip()) < 50:
+        return True
+    title = (candidate.get("title", "") or "").strip().rstrip(".").lower()
+    abstract_norm = abstract.strip().rstrip(".").lower()
+    if abstract_norm == title:
+        return True
+    return False
+
+
+def compute_abstract_coverage(
+    candidates: list[dict[str, Any]],
+    tiers: tuple[str, ...] | None = None,
+) -> dict[str, Any]:
+    """Compute abstract coverage metrics for candidates.
+
+    Args:
+        candidates: List of publication candidate dicts.
+        tiers: If provided, only count candidates whose match_tier is in this set.
+
+    Returns:
+        Dict with 'total', 'with_abstract', 'coverage_ratio', 'missing_abstract_ids'.
+    """
+    filtered = candidates
+    if tiers is not None:
+        filtered = [c for c in candidates if c.get("match_tier", "") in tiers]
+
+    total = len(filtered)
+    with_abstract = 0
+    missing_ids: list[int] = []
+    for c in filtered:
+        if not candidate_needs_abstract(c):
+            with_abstract += 1
+        else:
+            cid = c.get("candidate_id")
+            if cid is not None:
+                missing_ids.append(cid)
+
+    ratio = round(with_abstract / total, 2) if total > 0 else 0.0
+    return {
+        "total": total,
+        "with_abstract": with_abstract,
+        "coverage_ratio": ratio,
+        "missing_abstract_ids": missing_ids,
+    }
+
+
+def compute_source_validation_metrics(
+    candidates: list[dict[str, Any]],
+    validation_results: dict[int, dict[str, Any]],
+) -> dict[str, Any]:
+    """Compute source validation metrics from validation results.
+
+    Args:
+        candidates: List of publication candidate dicts.
+        validation_results: Dict mapping candidate_id to validation result dict.
+
+    Returns:
+        Dict with 'total', 'valid', 'invalid', 'unverifiable', 'invalid_source_id_count',
+        'invalid_details'.
+    """
+    total = len(candidates)
+    valid = 0
+    invalid = 0
+    unverifiable = 0
+    invalid_details: list[dict[str, Any]] = []
+
+    for c in candidates:
+        cid = c.get("candidate_id")
+        vr = validation_results.get(cid, {})
+        if not vr:
+            unverifiable += 1
+            continue
+        if vr.get("valid"):
+            valid += 1
+        else:
+            invalid += 1
+            invalid_details.append({
+                "candidate_id": cid,
+                "doi": c.get("doi", ""),
+                "source_id": c.get("source_id", ""),
+                "issues": vr.get("issues", []),
+            })
+
+    return {
+        "total": total,
+        "valid": valid,
+        "invalid": invalid,
+        "unverifiable": unverifiable,
+        "invalid_source_id_count": invalid,
+        "invalid_details": invalid_details,
+    }
 
 
 SOURCE_TIERS: dict[str, dict[str, Any]] = {
@@ -263,6 +463,7 @@ def build_curated_and_themes(
         elif me.get("pi_name_match") == "partial" or me.get("affiliation_match") == "unknown":
             tier = "ambiguous"
         c["_derived_tier"] = tier
+        c["match_tier"] = tier
         tier_counts[tier] = tier_counts.get(tier, 0) + 1
 
     curated_pubs = []
@@ -453,6 +654,7 @@ def run(input_path: Path, output_dir: Path, fixture_dir: Path | None = None) -> 
 
     blocking: list[str] = []
     warnings: list[str] = []
+    repair_hints: list[dict[str, str]] = []
     if not candidates:
         blocking.append("No publication candidates found from any source.")
     if confirmed == 0 and likely == 0:
@@ -467,13 +669,40 @@ def run(input_path: Path, output_dir: Path, fixture_dir: Path | None = None) -> 
             "Tier 1 sources produced insufficient confirmed/likely publications. "
             "Consider activating Tier 2 sources."
         )
+        repair_hints.append({
+            "field": "source_tier",
+            "suggestion": "Activate Tier 2 sources (Crossref, preprint servers) to resolve ambiguous candidates.",
+        })
 
-    status = "fail" if blocking else ("partial" if warnings else "pass")
-    sufficient = tier1_sufficient
+    abstract_cov_all = compute_abstract_coverage(candidates)
+    abstract_cov_cl = compute_abstract_coverage(candidates, tiers=("confirmed", "likely"))
+    if abstract_cov_cl["coverage_ratio"] < 0.5 and abstract_cov_cl["total"] > 0:
+        warnings.append(
+            f"Abstract coverage is low: {abstract_cov_cl['with_abstract']}/{abstract_cov_cl['total']} "
+            f"confirmed/likely publications have abstracts."
+        )
+        repair_hints.append({
+            "field": "abstract",
+            "suggestion": "Enrich publication metadata: use DOI-based lookup from OpenAlex, PubMed, "
+            "Semantic Scholar, or Crossref to retrieve missing abstracts. "
+            "Do not fabricate summaries from titles alone.",
+        })
 
     sources_returning = sorted(s for s, c in source_db_counts.items() if c > 0)
     plan_sources = {s.get("source") for s in plan.get("search_sources", []) if isinstance(s, dict)}
     sources_no_results = sorted(plan_sources - set(sources_returning))
+
+    bio = input_data.get("biomedical_relevant", False)
+    if bio and "pubmed" not in sources_returning:
+        warnings.append("PubMed returned 0 candidates for this biomedical lab.")
+        repair_hints.append({
+            "field": "pubmed",
+            "suggestion": "For biomedical labs, verify PubMed search terms and try PMID/DOI-based lookup "
+            "for confirmed candidates to retrieve abstracts.",
+        })
+
+    status = "fail" if blocking else ("partial" if warnings else "pass")
+    sufficient = tier1_sufficient
 
     audit = {
         "status": status,
@@ -505,12 +734,14 @@ def run(input_path: Path, output_dir: Path, fixture_dir: Path | None = None) -> 
             "confirmed_likely_ratio": round(
                 (confirmed + likely) / len(candidates), 2,
             ) if candidates else 0.0,
+            "abstract_coverage_ratio": abstract_cov_all["coverage_ratio"],
+            "confirmed_likely_abstract_coverage_ratio": abstract_cov_cl["coverage_ratio"],
             "sufficient": sufficient,
         },
         "source_status": source_status,
         "blocking_failures": blocking,
         "warnings": warnings,
-        "repair_hints": [],
+        "repair_hints": repair_hints,
     }
 
     write_json(output_dir / "publication_audit.json", audit)

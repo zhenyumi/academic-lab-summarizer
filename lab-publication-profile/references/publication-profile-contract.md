@@ -141,6 +141,7 @@ One JSON object per line:
 - `source_url`: URL in the source database.
 - `venue`: Journal or conference name.
 - `abstract`: Abstract or summary text from the source database when available.
+- `match_tier`: Derived match tier (`confirmed`, `likely`, `ambiguous`, `rejected`) set during curation.
 - `online_date`, `preprint_date`, `metadata_date`: Supplementary dates when available.
 
 ## Output: `publications.curated.json`
@@ -260,7 +261,7 @@ One JSON object per line linking publications to the lab:
 ### Required Fields
 
 - `status`: `pass`, `partial`, or `fail`.
-- `metrics`: Including tier counts, publication type counts, provenance completeness, `abstract_coverage_ratio`, and `confirmed_likely_abstract_coverage_ratio`.
+- `metrics`: Including tier counts, publication type counts, provenance completeness, and abstract coverage ratios (`abstract_coverage_ratio`, `confirmed_likely_abstract_coverage_ratio`).
 - `source_status`: Tiered search status with `tier0_available`, `tier1_sufficient`, `tier2_attempted`, `stop_reason`, and per-source details including `rate_limit_state` when applicable.
 - `blocking_failures`, `warnings`, `repair_hints`.
 

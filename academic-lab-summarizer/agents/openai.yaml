@@ -1,0 +1,4 @@
+﻿interface:
+  display_name: "Academic Lab Summarizer"
+  short_description: "Orchestrate lab summary on a single lab"
+  default_prompt: "Use $academic-lab-summarizer to orchestrate a full academic lab summary, connecting site evidence extraction, publication profiling, and lab profile synthesis into one workflow."

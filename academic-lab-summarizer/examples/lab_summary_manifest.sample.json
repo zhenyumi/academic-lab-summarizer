@@ -1,0 +1,47 @@
+﻿{
+  "lab_id": "example-lab-001",
+  "lab_name": "Doe Neural Development Lab",
+  "pi_name": "Jane Doe",
+  "institution": "Example University",
+  "lab_url": "https://example.edu/doe-lab",
+  "input_mode": "from_lab_url",
+  "steps": [
+    {
+      "skill": "lab-site-evidence-extraction",
+      "status": "completed",
+      "audit_status": "partial",
+      "artifacts": {
+        "lab_site_plan.json": "lab_summaries/example-lab-001/lab_site_plan.json",
+        "lab_pages.jsonl": "lab_summaries/example-lab-001/lab_pages.jsonl",
+        "lab_site_evidence.jsonl": "lab_summaries/example-lab-001/lab_site_evidence.jsonl",
+        "lab_site_audit.json": "lab_summaries/example-lab-001/lab_site_audit.json"
+      }
+    },
+    {
+      "skill": "lab-publication-profile",
+      "status": "completed",
+      "audit_status": "partial",
+      "artifacts": {
+        "publication_search_plan.json": "lab_summaries/example-lab-001/publication_search_plan.json",
+        "publication_candidates.jsonl": "lab_summaries/example-lab-001/publication_candidates.jsonl",
+        "publications.curated.json": "lab_summaries/example-lab-001/publications.curated.json",
+        "publication_evidence.jsonl": "lab_summaries/example-lab-001/publication_evidence.jsonl",
+        "publication_audit.json": "lab_summaries/example-lab-001/publication_audit.json",
+        "research_theme_profile.json": "lab_summaries/example-lab-001/research_theme_profile.json"
+      }
+    },
+    {
+      "skill": "lab-profile-synthesis",
+      "status": "completed",
+      "audit_status": "partial",
+      "artifacts": {
+        "position_signals.json": "lab_summaries/example-lab-001/position_signals.json",
+        "lab_summary_assessment.json": "lab_summaries/example-lab-001/lab_summary_assessment.json",
+        "lab_profile.json": "lab_summaries/example-lab-001/lab_profile.json",
+        "report.md": "lab_summaries/example-lab-001/report.md",
+        "lab_summary_audit.json": "lab_summaries/example-lab-001/lab_summary_audit.json"
+      }
+    }
+  ],
+  "overall_status": "completed"
+}
