@@ -22,6 +22,8 @@ Ambiguous publications must remain separate from confirmed or likely publication
 
 Google Scholar must not be used as an automated primary source.
 
+For detailed guidance on how a real source adapter should conform to the existing schema (per-source identifiers, dedup key precedence, failure classification, and PubMed/Google-Scholar rules), see `references/publication-profile-contract.md` → "Adapter Roadmap (not yet implemented)".
+
 ## Tiered Source Search
 
 Publication search follows a tiered priority model:

@@ -397,3 +397,61 @@ When a source is skipped due to rate limiting, `failure_reason` is set to `"rate
 
 - Publication dates must distinguish `year` (primary), `online_date`, `preprint_date`, and `metadata_date` when available.
 - Current-year research summaries must separate peer-reviewed, preprints, lab news, and uncertain records.
+
+## Adapter Roadmap (not yet implemented)
+
+> **Status**: This section documents future design intent. No source adapters ship in the
+> current package. The template runner processes synthetic fixtures only. Real adapters
+> must be built by the agent in `<run>/tools/` following this roadmap.
+
+### Per-Source Identifier and Lookup Strategy
+
+A real adapter for each source must use the identifier and lookup approach below. All adapters must produce candidates conforming to the existing `publication_candidates.jsonl` schema documented above.
+
+| Source | Primary Identifier | Lookup Strategy | Notes |
+|---|---|---|---|
+| OpenAlex | OpenAlex ID (`W...`) | Author search by name + institution, then filter by year range | Returns `abstract_inverted_index`; reconstruct before storing in `abstract` field |
+| Semantic Scholar | Semantic Scholar paper ID | Author search by name + affiliation, or DOI-based lookup | Returns `abstract` as plain text |
+| PubMed | PMID | MeSH/author search filtered by institution; PMID-based enrichment for known papers | Returns structured abstract; flatten to plain text |
+| Crossref | DOI | DOI-based lookup for candidates found by other sources; institution-filtered author search as fallback | Metadata verification (venue, date, publisher); typically no abstract |
+| bioRxiv / medRxiv | DOI (biorxiv/medrxiv prefix) | Recent preprint search by author name + institution | Preprints must be labeled `publication_type: "preprint"` and not merged with peer-reviewed |
+| arXiv | arXiv ID | Author search by name + institution; ID-based lookup | Preprints must be labeled `publication_type: "preprint"` |
+| Lab website | URL + extracted reference | Parse `publication_ref` claims from `lab_site_evidence.jsonl` | Tier 0; zero additional API cost; PI-curated but lacks abstracts |
+
+### Dedup Key Precedence
+
+When the same publication is found by multiple sources, deduplicate using the following key precedence (highest priority first). This is guidance for future adapters — it does not add new required schema fields.
+
+1. **DOI** — Canonical, cross-source identifier. Normalize to lowercase with `https://doi.org/` prefix stripped. Two candidates with the same normalized DOI are the same publication.
+2. **PMID** — PubMed-unique. Two candidates with the same PMID are the same publication.
+3. **OpenAlex ID** — OpenAlex-unique. Two candidates with the same OpenAlex ID are the same publication.
+4. **Normalized title + year** — Fallback when no DOI/PMID/OpenAlex ID is available. Normalize title: lowercase, collapse whitespace, strip punctuation. If normalized title and year match, treat as the same publication.
+
+When merging duplicates, prefer the candidate with richer metadata (abstract present, more complete author list, more authoritative source). The source priority order for metadata preference is: lab website (Tier 0) > OpenAlex > Semantic Scholar > PubMed > Crossref > preprint servers.
+
+### Failure Classification
+
+Adapters must classify source failures using the values below. Each value maps directly into the existing `source_status.sources[]` and `rate_limit_state` structures already documented in this contract.
+
+| Failure Value | Meaning | Maps To |
+|---|---|---|
+| `no_results` | Source returned zero candidates for the query | `source_status.sources[].outcome: "no_results"` |
+| `rate_limited` | HTTP 429 received; retry exhausted (3 attempts) | `rate_limit_state.failure_reason: "rate_limited"`; `source_status.sources[].outcome: "skipped"` |
+| `timeout` | Source exceeded 60-second per-source window | `rate_limit_state.failure_reason: "timeout"`; `source_status.sources[].outcome: "skipped"` |
+| `error` | Unexpected HTTP error or connection failure | `rate_limit_state.failure_reason: "error"`; `source_status.sources[].outcome: "skipped"` |
+
+Adapters must record `rate_limit_state.request_count`, `rate_limit_state.retry_count`, and `rate_limit_state.last_delay_seconds` for every source attempt, even when the source succeeds. The `failure_reason` field is `null` on success.
+
+### PubMed Required Rule
+
+PubMed is required (not optional) when the lab is biomedical, clinical, life-science, or neuroscience. This is determined by `biomedical_relevant: true` in the input. When PubMed is required:
+
+- The adapter must attempt PubMed search even if Tier 1 already produced sufficient results from other sources.
+- PubMed `no_results` must be recorded in `source_status` and surfaced in `publication_audit.json` warnings.
+- Do not skip PubMed because other sources returned enough candidates.
+
+### Google Scholar Excluded from Automation
+
+Google Scholar is excluded from automated search. It has no public API, enforces anti-automation measures unpredictably, and results are not reliably reproducible. It may be used as a manual fallback only (human-directed search, results copied into the pipeline). Adapters must not implement automated Google Scholar queries.
+
+This exclusion is already recorded in `publication_search_plan.json` under `excluded_sources`. Future adapters must maintain that record.
