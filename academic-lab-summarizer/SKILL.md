@@ -140,7 +140,7 @@ python academic-lab-summarizer/templates/scripts/run_academic_lab_summarizer.py 
   --out /tmp/lab-summary-test \
   --site-fixtures lab-site-evidence-extraction/examples \
   --pub-fixtures lab-publication-profile/examples \
-  --synth-fixtures lab-profile-synthesis/examples
+  --fit-fixtures lab-profile-synthesis/examples
 
 python academic-lab-summarizer/scripts/validate_lab_summary_manifest.py /tmp/lab-summary-test
 ```
@@ -153,7 +153,7 @@ python <run>/tools/run_academic_lab_summarizer.py \
   --out <run>/lab_summaries/<lab_id> \
   --site-fixtures <run>/lab_summaries/<lab_id> \
   --pub-fixtures <run>/lab_summaries/<lab_id> \
-  --synth-fixtures <run>/lab_summaries/<lab_id>
+  --fit-fixtures <run>/lab_summaries/<lab_id>
 
 python academic-lab-summarizer/scripts/validate_lab_summary_manifest.py <run>/lab_summaries/<lab_id>
 ```
