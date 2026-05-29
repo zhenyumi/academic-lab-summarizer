@@ -81,6 +81,10 @@ Allowed `extraction_status` values:
 - Contamination: are email fragments, navigation text, or card fragments polluting evidence?
 - Weak evidence ratio: what fraction of evidence is link-text-only?
 
+### Page Prioritization and Cleanup
+
+When crawling a real lab site, prioritize pages in this order: about/research > people/publications > join-us/openings > other. Strip navigation, footer, cookie banners, and sidebar content before extracting evidence. See "Crawler Roadmap" in the contract for full guidance on robots.txt, sitemaps, PDF handling, and failure retry.
+
 ## Validation
 
 ```bash

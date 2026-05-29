@@ -126,6 +126,61 @@ At least one extracted `research_direction` evidence item is required for downst
 
 - `confidence`: `high`, `medium`, `low`, or `unknown`.
 
+#### Optional Provenance Fields
+
+The following optional fields may appear on `lab_site_evidence.jsonl` items to improve provenance traceability. All are default-absent. Existing artifacts without them remain valid. The template runner does not populate them. Future crawlers and extractors may populate them.
+
+| Field | Type | Purpose |
+|---|---|---|
+| `page_title` | string or null | Title of the page where the evidence was found |
+| `fetched_at` | ISO 8601 string or null | Timestamp when the page was fetched |
+| `content_hash` | string or null | Hash of the page content at fetch time (for change detection) |
+| `selector_or_offset` | string or null | CSS selector or character offset locating the snippet within the page |
+| `language` | string or null | Detected language of the snippet (e.g., `"en"`, `"zh"`) |
+| `evidence_rationale` | string or null | Brief explanation of why this snippet was classified under this `claim_type` |
+
+## Crawler Roadmap (not yet implemented)
+
+> **Status**: This section documents future design intent. No crawler ships in the current package. The template runner processes synthetic fixtures only. Future adapters must implement these behaviors when building real crawl logic.
+
+### robots.txt and Crawl-Delay Compliance
+
+Future crawlers must fetch and parse `robots.txt` before crawling. Respect `Crawl-delay` directives. If `Crawl-delay` is specified, use it as the minimum delay between requests. If `robots.txt` disallows a path, skip it.
+
+### Sitemap Discovery
+
+Check for `sitemap.xml` or `Sitemap` directives in `robots.txt`. Use sitemaps to discover pages that may not be reachable from the navigation. Prioritize sitemap URLs that match known lab-relevant paths.
+
+### Canonical URL Resolution
+
+Resolve `<link rel="canonical">` tags to avoid fetching duplicate pages under different URL variants (trailing slash, query parameters, `www` vs non-`www`).
+
+### Page-Type Prioritization
+
+Prioritize crawling in this order:
+
+1. **About / Research**: `about`, `research`, `projects`, `focus` — highest value for research direction extraction.
+2. **People / Publications**: `people`, `team`, `members`, `publications`, `papers` — PI info, lab members, publication references.
+3. **Join Us / Openings**: `join`, `openings`, `positions`, `recruitment`, `opportunities` — position signals.
+4. **Other pages**: Lower priority; crawl if depth and page limits allow.
+
+### Content Cleanup
+
+Strip the following from extracted text before evidence extraction:
+
+- Navigation bars and menus
+- Page footers (copyright, contact info, social links)
+- Cookie consent banners
+- Sidebar widgets (recent posts, tag clouds, social feeds)
+
+### PDF Link Handling
+
+Detect links ending in `.pdf` or with `Content-Type: application/pdf`. Record them as potential evidence sources but do not attempt inline extraction. Note the PDF URL in the evidence item's `source_url` with a `snippet` indicating the PDF exists.
+
+### Failure Retry
+
+On HTTP errors (4xx/5xx), retry with exponential backoff: 1s, 2s, 4s. Maximum 3 retries per page. After 3 failures, record the page with `status_code` set to the error code and continue.
+
 ## Output: `lab_site_audit.json`
 
 ```json
