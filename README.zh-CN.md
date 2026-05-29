@@ -201,6 +201,10 @@ HTML 报告包含：
 - **返回按钮**，从证据引用跳转后可返回原位置
 - **打印优化布局**和 `prefers-reduced-motion` 支持
 
+**证据缺口呈现**：报告会显式展示证据缺口，而非隐藏它们。没有可用摘要的文献会显示 `[Overview limited: no abstract available]`，对于无法填充的字段则显示 `Not stated in available evidence.`。每篇文献卡片都包含一个证据级别指示器（`Full Text`、`Abstract` 或 `Metadata Only`），以便读者评估每条记录的可信度。
+
+**基于 fixture 的运行**：当针对合成 fixture（默认附带的配置）运行时，报告是示意性的——它们演示了输出结构和渲染效果，但不反映真实的实验室数据。真实的爬取和文献检索需要代理适配模板。
+
 ## 幕后机制
 
 每个技能都包含 runner scripts、templates、references 和 example artifacts。代理可以把模板复制到运行目录中的 tools 目录，再针对真实网站或 API 调用调整这些副本。随包代码优先保持标准库实现，便于检查、迁移和在受限环境中运行。

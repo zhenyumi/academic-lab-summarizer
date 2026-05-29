@@ -201,6 +201,10 @@ The HTML report includes:
 - **Return button** after navigating to an evidence reference
 - **Print-optimized layout** and `prefers-reduced-motion` support
 
+**Evidence-gap presentation**: The report surfaces evidence gaps explicitly rather than hiding them. Publications without available abstracts show `[Overview limited: no abstract available]` and display `Not stated in available evidence.` for fields that could not be populated. Each publication card includes an evidence-level indicator (`Full Text`, `Abstract`, or `Metadata Only`) so readers can assess how much weight to give each entry.
+
+**Fixture-based runs**: When run against synthetic fixtures (the default shipped configuration), reports are illustrative — they demonstrate the output structure and rendering but do not reflect real lab data. Real crawling and publication retrieval require agent-adapted templates.
+
 ## Behind the Scenes
 
 Each skill includes runner scripts, templates, references, and example artifacts. Agents can copy templates into a run-local tools directory and adapt those copies for real websites or API calls. The shipped code stays standard-library first so it is easy to inspect, move, and run in constrained environments.
