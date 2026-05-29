@@ -139,6 +139,10 @@ When a source is skipped due to rate limiting, `failure_reason` is set to `"rate
 | `ambiguous` | Partial match; same-name ambiguity or weak overlap; must not appear in research summaries |
 | `rejected` | Not a match after review |
 
+### Conservative Attribution
+
+When deriving match tiers, prefer `ambiguous` over `confirmed` whenever PI identity is not disambiguated by ORCID, confirmed affiliation, or coauthor overlap. Same-name PI without disambiguation cannot exceed `ambiguous`. False-confirmed is worse than false-ambiguous. See "Conservative Attribution Rules" in the contract for full guidance.
+
 ## Date Handling
 
 Publication dates must distinguish:

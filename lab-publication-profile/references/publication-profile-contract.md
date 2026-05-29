@@ -194,6 +194,34 @@ One JSON object per line:
 - `ambiguous`: Partial match with same-name ambiguity or weak overlap. Must not appear in research summaries.
 - `rejected`: Not a match after review.
 
+### Conservative Attribution Rules
+
+Future adapters must follow these rules when deriving match tiers. The template runner uses a simplified tier logic — these rules document the conservative principles that real adapters must apply.
+
+1. **False-confirmed is worse than false-ambiguous.** When in doubt, prefer `ambiguous` over `confirmed`. It is better to miss a real publication than to falsely attribute someone else's paper to the lab.
+2. **Same-name PI without disambiguation cannot exceed `ambiguous`.** If the PI name matches but there is no ORCID, no confirmed affiliation, and no coauthor overlap to disambiguate, the match tier must not exceed `ambiguous`.
+3. **Author position raises confidence.** First-author, last-author, or corresponding-author position increases confidence in a match. Middle-author-only position lowers it.
+4. **PI institution change.** If the PI recently moved institutions, check both old and new affiliations. If neither matches the lab's institution, default to `ambiguous`.
+5. **Multi-center collaborations.** If the PI is one of many authors and affiliation is not the lab's institution, default to `ambiguous`.
+6. **Coauthor and lab-page cross-check.** Presence of known lab members as co-authors, or appearance of the publication on the lab website's publications page, strengthens a match toward `confirmed`.
+
+For dedup identity-key ordering, see "Dedup Key Precedence" in the Adapter Roadmap section.
+
+### Optional Match Evidence Fields
+
+The `match_evidence` object on each candidate may include the following OPTIONAL sub-fields. All are default-absent. Existing artifacts without them remain valid. The template runner does not populate them. Future adapters may populate them to improve attribution confidence.
+
+| Field | Type | Values | Purpose |
+|---|---|---|---|
+| `orcid_match` | string or null | `"confirmed"`, `"not_found"`, `null` | Whether PI's ORCID was matched to the paper's author list |
+| `author_position` | string or null | `"first"`, `"last"`, `"corresponding"`, `"middle"`, `null` | PI's position in the author list |
+| `corresponding_author` | boolean or null | `true`, `false`, `null` | Whether PI is the corresponding author |
+| `coauthor_overlap` | boolean or null | `true`, `false`, `null` | Whether known lab members appear as co-authors |
+| `lab_page_overlap` | boolean or null | `true`, `false`, `null` | Whether the publication appears on the lab website's publications page |
+| `affiliation_history` | array of strings or null | e.g. `["MIT", "Stanford"]`, `null` | Known PI affiliations (current + recent past) |
+
+The contract example already shows `coauthor_overlap` and `lab_page_overlap`. The remaining fields (`orcid_match`, `author_position`, `corresponding_author`, `affiliation_history`) are new optional additions documented here for future adapters.
+
 ## Output: `publication_evidence.jsonl`
 
 One JSON object per line linking publications to the lab:
