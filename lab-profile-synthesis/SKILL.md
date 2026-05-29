@@ -128,6 +128,10 @@ Allowed `signal_strength` values:
 
 Every signal must include `source_url`, `snippet`, `evidence_refs`, `confidence`, and `last_observed_or_posted_date` when available. Generic recruitment language must not be upgraded to `confirmed_opening`. **Weak/generic signals must not be reported as current open positions. They may be noted as potential interest with explicit caveats.**
 
+### Conservative Position Classification
+
+False-positive openings are worse than false-negatives. Generic "join us" / "contact us" must never be upgraded to `confirmed_opening` or `likely_opening`. When in doubt, prefer `generic_recruitment` over `likely_opening`, and `likely_opening` over `confirmed_opening`. The `other`/`none` position categories cannot have `signal_strength: "confirmed_opening"`. See "Conservative Position Signal Rules" in the contract for full guidance on sub-category mapping.
+
 ## Assessment Dimensions
 
 `lab_summary_assessment.json` must cover:

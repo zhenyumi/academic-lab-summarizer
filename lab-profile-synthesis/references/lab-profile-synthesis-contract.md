@@ -98,6 +98,38 @@ Examples: `["site:4"]`, `["pub:1", "pub:5"]`, `["site:2", "pub:3"]`
 - `none`: No position language found.
 - `unknown`: Evidence is too unclear to classify.
 
+### Position Signal Sub-Categories
+
+The six `signal_strength` values cover finer real-world sub-categories. Map real-world distinctions onto these existing enum values — do NOT add new enum values.
+
+| `signal_strength` | Covers these real-world sub-categories |
+|---|---|
+| `confirmed_opening` | Funded postdoc with deadline; PhD position with start date; RA/technician/staff opening with application details; role-specific opening with clear availability |
+| `likely_opening` | Role-specific recruitment language without full details; "we are looking for a postdoc" without deadline or application info; bring-your-own-fellowship encouragement with some specifics |
+| `generic_recruitment` | "Join our team!"; "Contact us if interested"; generic "we are always looking for talented people" without role specificity |
+| `closed_or_past` | "Position filled"; "Deadline passed"; clearly dated past opportunities |
+| `none` | No position-related language found |
+| `unknown` | Evidence too unclear to classify |
+
+### Optional Signal Fields
+
+The `signals` array may include the following OPTIONAL fields. All are default-absent. Existing artifacts without them remain valid. The template runner does not populate them. Future adapters may extract them from position signal snippets.
+
+| Field | Type | Purpose |
+|---|---|---|
+| `application_method` | string or null | How to apply (e.g., `"email PI with CV"`, `"apply via university portal"`, `"submit through funding body"`) |
+
+This field is optional. Existing artifacts without it remain valid.
+
+### Conservative Position Signal Rules
+
+Future adapters must follow these rules when classifying position signals:
+
+1. **False-positive openings are worse than false-negatives.** It is better to miss a real opening than to report a non-existent one. When in doubt, downgrade: prefer `generic_recruitment` over `likely_opening`, and `likely_opening` over `confirmed_opening`.
+2. **Generic "join us" / "contact us" language MUST be classified as `generic_recruitment`.** Never upgrade generic recruitment language to `confirmed_opening` or `likely_opening`.
+3. **`other`/`none` position categories cannot be `confirmed_opening`.** This is enforced by the validator. If the position category is `other` or `none`, the signal strength must not exceed `generic_recruitment`.
+4. **When in doubt, downgrade.** Prefer `generic_recruitment` over `likely_opening`, and `likely_opening` over `confirmed_opening`. The cost of a false-positive (reporting a non-existent opening) is higher than the cost of a false-negative (missing a real one).
+
 ## Output: `lab_summary_assessment.json`
 
 ```json
