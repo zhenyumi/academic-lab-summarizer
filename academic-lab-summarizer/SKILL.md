@@ -158,7 +158,7 @@ python <run>/tools/run_academic_lab_summarizer.py \
 python academic-lab-summarizer/scripts/validate_lab_summary_manifest.py <run>/lab_summaries/<lab_id>
 ```
 
-The template runner reads audit_status from upstream audit files, determines step statuses based on stop conditions, and writes the manifest. Adapt it for real orchestration logic.
+The template runner reads audit_status from upstream audit files, determines step statuses based on stop conditions, and writes the manifest. Adapt it for real orchestration logic. The template runner only processes synthetic fixtures by default.
 
 ## References
 

@@ -12,6 +12,12 @@
 
 目标用户包括希望在联系、申请或比较实验室前进行系统了解的学生、研究人员和科研岗位求职者。
 
+## 项目状态
+
+本包提供**技能定义**、**基于 fixture 的模板运行器**、**验证脚本**和**示例产物**。模板运行器只处理合成 fixture 文件——不做真实网页爬取，也不调用真实 API。
+
+真实爬取（实验室网站）和真实 API 访问（OpenAlex、Semantic Scholar、PubMed、Crossref、bioRxiv、medRxiv、arXiv）需要代理将模板运行器复制到运行目录中的 tools 目录，并在副本中加入实际的 HTTP/API 逻辑。随包代码的设计目标是从 fixture 生成合法产物结构，让代理有稳定的 schema 可以构建。
+
 ## 环境要求
 
 - **Python 3.9+**。随包脚本只使用 Python 标准库。
@@ -133,7 +139,7 @@ reports/lab-summaries/<task_id>/
 
 | 技能 | 功能 |
 |------|------|
-| `lab-publication-profile` | 构建近年论文画像，包括分层搜索策略、来源 provenance、匹配层级、人工/规则策展状态、证据记录、审计输出和研究主题综合。实验室官网论文页首先搜索（Tier 0，零 API 成本）；然后搜索 OpenAlex 与 Semantic Scholar（Tier 1）；当实验室属于生物医学、临床、生命科学或神经科学相关领域时，PubMed 也是必须来源；Crossref 和预印本服务器作为补充或 fallback（Tier 2）。API 调用采用指数退避限速策略。 |
+| `lab-publication-profile` | 构建近年论文画像，包括分层搜索策略、来源 provenance、匹配层级、人工/规则策展状态、证据记录、审计输出和研究主题综合。实验室官网论文页首先搜索（Tier 0，零 API 成本）；然后搜索 OpenAlex 与 Semantic Scholar（Tier 1）；当实验室属于生物医学、临床、生命科学或神经科学相关领域时，PubMed 也是必须来源；Crossref 和预印本服务器作为补充或 fallback（Tier 2）。API 调用采用指数退避限速策略（合同规范；模板运行器不发起真实 API 调用——代理适配后的 adapter 需自行执行限速逻辑）。 |
 
 ambiguous 和 rejected 论文不得进入研究主题和实验室研究总结。confirmed 与 likely 论文可以生成结构化概览，包括研究问题、方法、关键发现和意义。
 

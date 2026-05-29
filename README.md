@@ -12,6 +12,12 @@ Every output follows a "show your work" approach. Lab claims point back to sourc
 
 The target users are students, researchers, and research staff who want to understand a lab before contacting it, applying to it, or comparing it with other labs.
 
+## Project Status
+
+This package ships **skill definitions**, **fixture-based template runners**, **validators**, and **example artifacts**. The template runners process synthetic fixture files only — they do not perform live web crawling or live API queries.
+
+Real crawling (lab websites) and real API access (OpenAlex, Semantic Scholar, PubMed, Crossref, bioRxiv, medRxiv, arXiv) require the agent to copy the template runners into a run-local tools directory and adapt those copies with actual HTTP/API logic. The shipped code is designed to produce valid artifact structures from fixtures so the agent has a stable schema to build against.
+
 ## Requirements
 
 - **Python 3.9+**. The shipped scripts use only the Python standard library.
@@ -133,7 +139,7 @@ Publication analysis is a core v1 contract, not a future add-on.
 
 | Skill | What it does |
 |-------|--------------|
-| `lab-publication-profile` | Builds a recent publication profile with a tiered search policy, source provenance, match tiers, curated publication status, evidence records, audit output, and research theme synthesis. Lab website publications page is searched first (Tier 0, zero API cost); then OpenAlex and Semantic Scholar (Tier 1); PubMed is required for biomedical, clinical, life-science, and neuroscience labs; Crossref and preprint servers act as enrichment or fallback (Tier 2). API rate limiting with exponential backoff is enforced. |
+| `lab-publication-profile` | Builds a recent publication profile with a tiered search policy, source provenance, match tiers, curated publication status, evidence records, audit output, and research theme synthesis. Lab website publications page is searched first (Tier 0, zero API cost); then OpenAlex and Semantic Scholar (Tier 1); PubMed is required for biomedical, clinical, life-science, and neuroscience labs; Crossref and preprint servers act as enrichment or fallback (Tier 2). API rate limiting with exponential backoff is specified in the contract; the template runner does not make live API calls — the agent's adapted adapters must enforce these rules. |
 
 Ambiguous and rejected publications are excluded from research themes and lab research summaries. Confirmed and likely papers can be summarized with structured overviews covering the research question, methods, key finding, and significance.
 

@@ -236,7 +236,7 @@ python <run>/tools/audit_lab_summary.py <run>/lab_summaries/<lab_id>
 python <run>/tools/build_lab_summary_html.py <run>/lab_summaries/<lab_id>
 ```
 
-Adapt the copied `run_lab_profile_synthesis.py` for real upstream artifact paths and any site-specific signal classification logic.
+Adapt the copied `run_lab_profile_synthesis.py` for real upstream artifact paths and any site-specific signal classification logic. The template runner only processes synthetic fixtures by default.
 
 ## References
 
