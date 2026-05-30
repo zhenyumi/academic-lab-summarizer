@@ -1,26 +1,70 @@
+# Python caches and build outputs
 __pycache__/
 *.pyc
 *.pyo
 *.egg-info/
 dist/
 build/
+
+# Python test and coverage outputs
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
 .coverage
 htmlcov/
+coverage.xml
+junit.xml
+test-results/
+
+# Local environments and secrets
 .env
+.env.*
+!.env.example
 .venv/
 venv/
-*.log
-*.tmp
-.DS_Store
+
+# Generated run artifacts
 reports/
 lab_summaries/
-tmp/
-find-academic-position/
-.agents/
+
+# Local agent / assistant state
+.claude/
+.codex/
 .opencode/
 opencode.json
 opencode.jsonc
+.openclaw/
 .omo/
+.agents/
+
+# IDE and editor state
+.vscode/
+.idea/
+.cursor/
+.windsurf/
+.history/
+*.swp
+*.swo
+*~
+
+# Temporary and scratch files
+tmp/
+tmp*/
+scratch/
+sandbox/
+*.tmp
+*.bak
+*.log
+
+# Local databases
+*.sqlite
+*.sqlite3
+*.db
+
+# OS artifacts
+.DS_Store
+Thumbs.db
+
+# Project-specific local directories
+find-academic-position/
+docs/

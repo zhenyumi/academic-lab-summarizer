@@ -123,6 +123,8 @@ reports/lab-summaries/<task_id>/
 
 `report.html` 是默认面向用户打开的交互式报告，支持导航、可点击证据引用和可折叠章节。`report.md` 是对应的 Markdown 版本。JSON 和 JSONL 产物会与报告一起保留，方便代理审计证据、重跑单个步骤，或解释某个结论是如何得出的。
 
+> **注意：** `reports/` 和 `lab_summaries/` 下的生成运行产物已被 Git 忽略，不会纳入版本控制。各技能 `examples/` 目录下的 `*.sample.json`、`*.sample.jsonl` 和 `*.sample.md` 示例文件保持跟踪，因为它们定义了公开技能契约并作为测试夹具使用。
+
 ## 技能分类
 
 ### 实验室证据

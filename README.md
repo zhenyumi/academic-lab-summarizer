@@ -123,6 +123,8 @@ reports/lab-summaries/<task_id>/
 
 `report.html` is the default user-facing report with interactive navigation, clickable evidence references, and collapsible sections. `report.md` is the matching Markdown report. JSON and JSONL artifacts are kept alongside the report so the agent can audit evidence, rerun individual steps, or explain how a conclusion was reached.
 
+> **Note:** Generated run outputs under `reports/` and `lab_summaries/` are intentionally ignored by Git. Bundled `*.sample.json`, `*.sample.jsonl`, and `*.sample.md` artifacts under each skill's `examples/` directory remain tracked because they define the public skill contract and serve as test fixtures.
+
 ## Skill Categories
 
 ### Lab Evidence
